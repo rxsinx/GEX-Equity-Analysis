@@ -1,0 +1,2 @@
+# NIFTY-GEX-NEW
+NIFTY &amp; BANKNIFTY GEX Analyzer
