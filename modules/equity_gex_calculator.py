@@ -133,7 +133,7 @@ def calculate_equity_gex(
     Returns:
         DataFrame indexed by strike with all GEX, DEX, Greeks columns.
     """
-    from modules.equity_utils import calculate_tte
+    from .equity_utils import calculate_tte
 
     T = calculate_tte(expiry_date_str)
     records: list[dict] = []
@@ -253,7 +253,7 @@ def recalculate_gex_delta(
     Fast GEX update on spot change — reuses cached IV, only recalculates
     spot-sensitive Greeks (delta, gamma, theo).
     """
-    from modules.equity_utils import calculate_tte
+    from .equity_utils import calculate_tte
     T = calculate_tte(expiry_date_str)
     df = cached_df.copy()
 
