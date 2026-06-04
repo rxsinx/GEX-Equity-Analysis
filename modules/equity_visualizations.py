@@ -586,7 +586,7 @@ def build_equity_matrix(
 
     Returns (display_matrix_fmt, display_matrix_numeric)
     """
-    from modules.equity_utils import get_atm_strike
+    from .equity_utils import get_atm_strike
 
     matrix = gex_df.sort_values("strike").copy()
     matrix["strike"] = matrix["strike"].astype(int)
