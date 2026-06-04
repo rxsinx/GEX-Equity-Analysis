@@ -51,6 +51,7 @@ from modules.equity_visualizations import (
     plot_pin_risk_gauge,
     plot_gex_per_rupee,
     build_equity_matrix,
+    render_equity_matrix_with_summary,
 )
 
 IST = pytz.timezone("Asia/Kolkata")
@@ -848,7 +849,7 @@ Spot is **{'ABOVE' if spot_price > gamma_flip else 'BELOW'}** the flip point.
     # ── TAB 6: Positioning Matrix ─────────────────────────────────────────────
     with tab6:
         st.subheader(f"Strike-by-Strike Positioning Matrix — {symbol}")
-
+        render_equity_matrix_with_summary(gex_df, symbol)    
         dm_fmt, dm_num = build_equity_matrix(gex_df, spot_price, gamma_levels, si)
 
         atm_strike = int(get_atm_strike(spot_price, si))
