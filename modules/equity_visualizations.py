@@ -19,6 +19,7 @@ from typing import Optional, Dict
 
 import numpy as np
 import pandas as pd
+import streamlit as st
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
@@ -637,3 +638,81 @@ def build_equity_matrix(
 
     dm_fmt = dm.map(lambda x: "—" if pd.isna(x) else f"{x:.2f}")
     return dm_fmt, dm
+
+
+def render_equity_matrix_with_summary(gex_df: pd.DataFrame, symbol: str):
+    """
+    Extracts explicit absolute spikes and volatility outliers from the matrix 
+    dataframe and displays them in a clean, scannable summary block.
+    """
+    df = gex_df.copy()
+    
+    # ----------------------------------------------------
+    # 1. PROCESSING METRICS (SINGULAR HIGHEST & TOP 2)
+    # ----------------------------------------------------
+    # A. Highest GEX Outliers
+    highest_put_gex  = df.nlargest(1, 'put_gex')['strike'].values[0]
+    
+    # Highest negative Call GEX (most negative = minimum raw value)
+    highest_call_gex = df.nsmallest(1, 'call_gex')['strike'].values[0]
+    
+    # Highest Net GEX (Absolute Value Exposure)
+    df['net_gex_abs'] = (df['call_gex'] + df['put_gex']).abs()
+    highest_net_gex   = df.nlargest(1, 'net_gex_abs')['strike'].values[0]
+    
+    # B. Top 2 Open Interest (OI) Strikes
+    top2_call_oi = df.nlargest(2, 'call_oi')['strike'].tolist()
+    top2_put_oi  = df.nlargest(2, 'put_oi')['strike'].tolist()
+    
+    # C. Most Volatile Strikes (Highest IV%)
+    # Filter out extreme out-of-the-money distortions (where IV might show 0 or NaN)
+    valid_iv = df[(df['call_iv'] > 0) & (df['put_iv'] > 0) & (np.isfinite(df['call_iv'])) & (np.isfinite(df['put_iv']))]
+    
+    highest_call_iv = valid_iv.nlargest(1, 'call_iv')['strike'].values[0] if not valid_iv.empty else "—"
+    highest_put_iv  = valid_iv.nlargest(1, 'put_iv')['strike'].values[0] if not valid_iv.empty else "—"
+
+    # Formatting helper to handle safely
+    def fmt(val):
+        return f"₹{int(val):,}" if isinstance(val, (int, float, np.number)) else str(val)
+
+    # ----------------------------------------------------
+    # 2. CONSTRUCT SUMMARY DATAFRAME
+    # ----------------------------------------------------
+    summary_data = {
+        "Core Derivative Metric": [
+            "🟢 Highest Put GEX (Key Floor)",
+            "🔴 Highest Call GEX (Negative - Target Ceiling)",
+            "📐 Highest Net GEX (Absolute Volume Anchor)",
+            "📊 Call Open Interest (OI)",
+            "🛡️ Put Open Interest (OI)",
+            "⚡ Most Volatile Call Strike (Highest IV%)",
+            "🔥 Most Volatile Put Strike (Highest IV%)"
+        ],
+        "Primary Strike": [
+            fmt(highest_put_gex),
+            fmt(highest_call_gex),
+            fmt(highest_net_gex),
+            fmt(top2_call_oi[0]) if len(top2_call_oi) > 0 else "—",
+            fmt(top2_put_oi[0]) if len(top2_put_oi) > 0 else "—",
+            fmt(highest_call_iv),
+            fmt(highest_put_iv)
+        ],
+        "Secondary Strike": [
+            "— (Peak Only)",
+            "— (Peak Only)",
+            "— (Peak Only)",
+            fmt(top2_call_oi[1]) if len(top2_call_oi) > 1 else "—",
+            fmt(top2_put_oi[1]) if len(top2_put_oi) > 1 else "—",
+            "— (Peak Only)",
+            "— (Peak Only)"
+        ]
+    }
+    
+    summary_df = pd.DataFrame(summary_data)
+
+    # ----------------------------------------------------
+    # 3. STREAMLIT DISPLAY INTERFACE
+    # ----------------------------------------------------
+    st.subheader(f"🏆 Key Exposure Summary — {symbol.upper()}")
+    st.dataframe(summary_df, use_container_width=True, hide_index=True)
+    st.markdown("---")
