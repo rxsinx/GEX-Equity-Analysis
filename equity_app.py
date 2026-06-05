@@ -848,36 +848,163 @@ Spot is **{'ABOVE' if spot_price > gamma_flip else 'BELOW'}** the flip point.
     # ── TAB 6: Positioning Matrix ─────────────────────────────────────────────
     with tab6:
         st.subheader(f"Strike-by-Strike Positioning Matrix — {symbol}")
-            
+
         dm_fmt, dm_num = build_equity_matrix(gex_df, spot_price, gamma_levels, si)
 
-        atm_strike = int(get_atm_strike(spot_price, si))
+        atm_strike   = int(get_atm_strike(spot_price, si))
         strikes_only = dm_fmt.columns.drop("TOTAL") if "TOTAL" in dm_fmt.columns else dm_fmt.columns
 
+        # ── resolve dynamic row keys (contain unit suffix) ────────────────────
+        def _row(prefix):
+            """Return first row label whose name starts with prefix."""
+            for idx in dm_num.index:
+                if str(idx).startswith(prefix):
+                    return idx
+            return None
+
+        row_call_gex = _row("Call GEX")
+        row_put_gex  = _row("Put GEX")
+        row_net_gex  = _row("Net GEX")
+        row_call_oi  = _row("Call OI")
+        row_put_oi   = _row("Put OI")
+        row_call_iv  = "Call IV%"
+        row_put_iv   = "Put IV%"
+
+        # ── helper: top-N column indices from a numeric row ───────────────────
+        def _top_n(row_key, n, largest=True):
+            """Return list of up to n column labels (strike ints) from strikes_only."""
+            if row_key is None or row_key not in dm_num.index:
+                return []
+            series = dm_num.loc[row_key, strikes_only].apply(
+                lambda x: float(x) if not pd.isna(x) else float("nan")
+            ).dropna()
+            if series.empty:
+                return []
+            ranked = series.nlargest(n) if largest else series.nsmallest(n)
+            return list(ranked.index)
+
+        # pre-compute rankings ─────────────────────────────────────────────────
+        put_gex_top   = _top_n(row_put_gex,  2, largest=True)   # highest put GEX
+        call_gex_bot  = _top_n(row_call_gex, 2, largest=False)  # most negative call GEX
+        net_gex_top   = _top_n(row_net_gex,  2, largest=True)   # highest net GEX
+        net_gex_bot   = _top_n(row_net_gex,  2, largest=False)  # lowest net GEX
+        call_oi_top   = _top_n(row_call_oi,  2, largest=True)
+        put_oi_top    = _top_n(row_put_oi,   2, largest=True)
+        call_iv_top   = _top_n(row_call_iv,  2, largest=True)   # most volatile call strikes
+        put_iv_top    = _top_n(row_put_iv,   2, largest=True)   # most volatile put strikes
+
+        # ── colour palette ────────────────────────────────────────────────────
+        # Put GEX (support) → green tones
+        _PUT_GEX_1  = "background-color:rgba(34,197,94,0.70);color:white;font-weight:bold;"
+        _PUT_GEX_2  = "background-color:rgba(34,197,94,0.35);color:white;"
+        # Call GEX (resistance, negative) → red tones
+        _CALL_GEX_1 = "background-color:rgba(239,68,68,0.70);color:white;font-weight:bold;"
+        _CALL_GEX_2 = "background-color:rgba(239,68,68,0.35);color:white;"
+        # Net GEX positive → emerald, negative → purple
+        _NET_POS_1  = "background-color:rgba(16,185,129,0.70);color:white;font-weight:bold;"
+        _NET_POS_2  = "background-color:rgba(16,185,129,0.35);color:white;"
+        _NET_NEG_1  = "background-color:rgba(139,92,246,0.70);color:white;font-weight:bold;"
+        _NET_NEG_2  = "background-color:rgba(139,92,246,0.35);color:white;"
+        # OI walls → blue (call) and teal (put)
+        _CALL_OI_1  = "background-color:rgba(245,158,11,0.70);color:white;font-weight:bold;"
+        _CALL_OI_2  = "background-color:rgba(245,158,11,0.35);color:white;"
+        _PUT_OI_1   = "background-color:rgba(6,182,212,0.70);color:white;font-weight:bold;"
+        _PUT_OI_2   = "background-color:rgba(6,182,212,0.35);color:white;"
+        # IV hottest strikes → orange
+        _IV_1       = "background-color:rgba(249,115,22,0.70);color:white;font-weight:bold;"
+        _IV_2       = "background-color:rgba(249,115,22,0.35);color:white;"
+        # ATM column → gold border
+        _ATM_COL    = "background-color:rgba(250,204,21,0.14);border:2px solid #fbbf24;"
+        # TOTAL column
+        _TOTAL_COL  = "background-color:rgba(148,163,184,0.10);font-weight:bold;border-left:2px solid #475569;"
+
         def _style_eq_matrix(df):
-            styles = pd.DataFrame('', index=df.index, columns=df.columns)
+            styles = pd.DataFrame("", index=df.index, columns=df.columns)
+
+            # ATM column (lowest priority — applied first, overridden below)
             if atm_strike in df.columns:
-                styles.loc[:, atm_strike] = (
-                    'background-color:rgba(250,204,21,0.18);border:2px solid #fbbf24;')
+                styles.loc[:, atm_strike] = _ATM_COL
+
+            # TOTAL column
             if "TOTAL" in df.columns:
-                styles["TOTAL"] = (
-                    'background-color:rgba(148,163,184,0.12);font-weight:bold;'
-                    'border-left:2px solid gray;')
+                styles["TOTAL"] = _TOTAL_COL
+
+            # ── Put GEX row: top-2 green ──────────────────────────────────
+            if row_put_gex and row_put_gex in df.index:
+                if len(put_gex_top) >= 1:
+                    styles.loc[row_put_gex, put_gex_top[0]] = _PUT_GEX_1
+                if len(put_gex_top) >= 2:
+                    styles.loc[row_put_gex, put_gex_top[1]] = _PUT_GEX_2
+
+            # ── Call GEX row: bottom-2 (most negative) red ────────────────
+            if row_call_gex and row_call_gex in df.index:
+                if len(call_gex_bot) >= 1:
+                    styles.loc[row_call_gex, call_gex_bot[0]] = _CALL_GEX_1
+                if len(call_gex_bot) >= 2:
+                    styles.loc[row_call_gex, call_gex_bot[1]] = _CALL_GEX_2
+
+            # ── Net GEX row: top-2 positive (emerald) + top-2 negative (purple) ─
+            if row_net_gex and row_net_gex in df.index:
+                if len(net_gex_top) >= 1:
+                    styles.loc[row_net_gex, net_gex_top[0]] = _NET_POS_1
+                if len(net_gex_top) >= 2:
+                    styles.loc[row_net_gex, net_gex_top[1]] = _NET_POS_2
+                if len(net_gex_bot) >= 1:
+                    styles.loc[row_net_gex, net_gex_bot[0]] = _NET_NEG_1
+                if len(net_gex_bot) >= 2:
+                    styles.loc[row_net_gex, net_gex_bot[1]] = _NET_NEG_2
+
+            # ── Call OI row: top-2 amber ──────────────────────────────────
+            if row_call_oi and row_call_oi in df.index:
+                if len(call_oi_top) >= 1:
+                    styles.loc[row_call_oi, call_oi_top[0]] = _CALL_OI_1
+                if len(call_oi_top) >= 2:
+                    styles.loc[row_call_oi, call_oi_top[1]] = _CALL_OI_2
+
+            # ── Put OI row: top-2 cyan ────────────────────────────────────
+            if row_put_oi and row_put_oi in df.index:
+                if len(put_oi_top) >= 1:
+                    styles.loc[row_put_oi, put_oi_top[0]] = _PUT_OI_1
+                if len(put_oi_top) >= 2:
+                    styles.loc[row_put_oi, put_oi_top[1]] = _PUT_OI_2
+
+            # ── Call IV% row: top-2 hottest orange ───────────────────────
+            if row_call_iv in df.index:
+                if len(call_iv_top) >= 1:
+                    styles.loc[row_call_iv, call_iv_top[0]] = _IV_1
+                if len(call_iv_top) >= 2:
+                    styles.loc[row_call_iv, call_iv_top[1]] = _IV_2
+
+            # ── Put IV% row: top-2 hottest orange ────────────────────────
+            if row_put_iv in df.index:
+                if len(put_iv_top) >= 1:
+                    styles.loc[row_put_iv, put_iv_top[0]] = _IV_1
+                if len(put_iv_top) >= 2:
+                    styles.loc[row_put_iv, put_iv_top[1]] = _IV_2
+
             return styles
 
         st.dataframe(
             dm_fmt.style.apply(_style_eq_matrix, axis=None),
             use_container_width=True,
+            height=min(600, 38 * (len(dm_fmt) + 2)),
         )
 
+        # ── Colour legend ─────────────────────────────────────────────────────
         st.markdown("""
-**Matrix Legend:**
-- 🟡 **ATM column** = Strike closest to current spot
-- **Call GEX +ve** = Puts being bought (dealer long gamma) → support
-- **Call GEX -ve** = Calls being bought (dealer short gamma) → resistance
-- **Net GEX** = Combined dealer gamma at that strike
-- **TOTAL column** = Chain-wide aggregate
-""")
+<div style="font-size:12px;color:#9ca3af;padding:6px 0 2px 0;line-height:2.0;">
+<b>Highlight Legend</b> &nbsp;|&nbsp;
+<span style="background:rgba(34,197,94,0.70);color:white;padding:1px 7px;border-radius:3px;">🟢 Put GEX Top-2</span>&nbsp;
+<span style="background:rgba(239,68,68,0.70);color:white;padding:1px 7px;border-radius:3px;">🔴 Call GEX Bot-2 (most –ve)</span>&nbsp;
+<span style="background:rgba(16,185,129,0.70);color:white;padding:1px 7px;border-radius:3px;">🟩 Net GEX Top-2</span>&nbsp;
+<span style="background:rgba(139,92,246,0.70);color:white;padding:1px 7px;border-radius:3px;">🟣 Net GEX Bot-2</span>&nbsp;
+<span style="background:rgba(245,158,11,0.70);color:white;padding:1px 7px;border-radius:3px;">🟡 Call OI Top-2</span>&nbsp;
+<span style="background:rgba(6,182,212,0.70);color:white;padding:1px 7px;border-radius:3px;">🔵 Put OI Top-2</span>&nbsp;
+<span style="background:rgba(249,115,22,0.70);color:white;padding:1px 7px;border-radius:3px;">🟠 IV Hottest Top-2</span>&nbsp;
+<span style="background:rgba(250,204,21,0.25);color:white;border:2px solid #fbbf24;padding:1px 7px;border-radius:3px;">🟡 ATM Strike</span>
+<br><span style="color:#6b7280;">Darker shade = #1 rank · Lighter shade = #2 rank</span>
+</div>
+""", unsafe_allow_html=True)
 
     # ── TAB 7: Greeks ─────────────────────────────────────────────────────────
     with tab7:
