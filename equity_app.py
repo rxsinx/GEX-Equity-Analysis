@@ -994,14 +994,14 @@ Spot is **{'ABOVE' if spot_price > gamma_flip else 'BELOW'}** the flip point.
         st.markdown("""
 <div style="font-size:12px;color:#9ca3af;padding:6px 0 2px 0;line-height:2.0;">
 <b>Highlight Legend</b> &nbsp;|&nbsp;
-<span style="background:rgba(34,197,94,0.70);color:white;padding:1px 7px;border-radius:3px;">🟢 Put GEX Top-2</span>&nbsp;
-<span style="background:rgba(239,68,68,0.70);color:white;padding:1px 7px;border-radius:3px;">🔴 Call GEX Bot-2 (most –ve)</span>&nbsp;
-<span style="background:rgba(16,185,129,0.70);color:white;padding:1px 7px;border-radius:3px;">🟩 Net GEX Top-2</span>&nbsp;
-<span style="background:rgba(139,92,246,0.70);color:white;padding:1px 7px;border-radius:3px;">🟣 Net GEX Bot-2</span>&nbsp;
-<span style="background:rgba(245,158,11,0.70);color:white;padding:1px 7px;border-radius:3px;">🟡 Call OI Top-2</span>&nbsp;
-<span style="background:rgba(6,182,212,0.70);color:white;padding:1px 7px;border-radius:3px;">🔵 Put OI Top-2</span>&nbsp;
-<span style="background:rgba(249,115,22,0.70);color:white;padding:1px 7px;border-radius:3px;">🟠 IV Hottest Top-2</span>&nbsp;
-<span style="background:rgba(250,204,21,0.25);color:white;border:2px solid #fbbf24;padding:1px 7px;border-radius:3px;">🟡 ATM Strike</span>
+<span style="background:rgba(34,197,94,0.70);color:white;padding:1px 7px;border-radius:3px;">🟢 Put GEX </span>&nbsp;
+<span style="background:rgba(239,68,68,0.70);color:white;padding:1px 7px;border-radius:3px;">🔴 Call GEX (–ve)</span>&nbsp;
+<span style="background:rgba(16,185,129,0.70);color:white;padding:1px 7px;border-radius:3px;">🟩 Net GEX (+ve)</span>&nbsp;
+<span style="background:rgba(139,92,246,0.70);color:white;padding:1px 7px;border-radius:3px;">🟣 Net GEX (-ve)</span>&nbsp;
+<span style="background:rgba(245,158,11,0.70);color:white;padding:1px 7px;border-radius:3px;">🟡 Call OI</span>&nbsp;
+<span style="background:rgba(6,182,212,0.70);color:white;padding:1px 7px;border-radius:3px;">🔵 Put OI</span>&nbsp;
+<span style="background:rgba(249,115,22,0.70);color:white;padding:1px 7px;border-radius:3px;">🟠 IV Hottest</span>&nbsp;
+<span style="background:rgba(250,204,21,0.25);color:black;border:2px solid #fbbf24;padding:1px 7px;border-radius:3px;">🟡 ATM Strike</span>
 <br><span style="color:#6b7280;">Darker shade = #1 rank · Lighter shade = #2 rank</span>
 </div>
 """, unsafe_allow_html=True)
