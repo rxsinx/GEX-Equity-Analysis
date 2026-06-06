@@ -872,7 +872,7 @@ Spot is **{'ABOVE' if spot_price > gamma_flip else 'BELOW'}** the flip point.
         row_call_delta = "Call Δ"
         row_put_delta  = "Put Δ"
         row_prob     = "Put Δ Prob% ↓ expiry"
-        row_hedge    = "Shares to Buy (Δ hedge)"
+        row_hedge    = "Shares (Δ hedge)"
 
         # ── inject hedge shares row into both dm_fmt and dm_num ──────────────
         # Formula: lot_size × call_delta, rounded to nearest integer.
@@ -1056,7 +1056,7 @@ Spot is **{'ABOVE' if spot_price > gamma_flip else 'BELOW'}** the flip point.
                         if not pd.isna(hv):
                             styles.loc[row_hedge, col] = (
                                 "background-color:rgba(20,184,166,0.22);"
-                                "color:#99f6e4;font-weight:bold;"
+                                "color:#011713;font-weight:bold;"
                             )
                     except (TypeError, ValueError, KeyError):
                         continue
@@ -1093,7 +1093,7 @@ Spot is **{'ABOVE' if spot_price > gamma_flip else 'BELOW'}** the flip point.
 <span style="background:rgba(34,197,94,0.65);color:white;padding:1px 7px;border-radius:3px;">🟢 Low prob &lt;15% — deep OTM floor, unlikely to touch</span>
 <br>
 <b>Shares to Buy (Δ hedge) row</b> &nbsp;|&nbsp;
-<span style="background:rgba(20,184,166,0.22);color:#99f6e4;padding:1px 7px;border-radius:3px;">Teal — shares call seller must hold per lot to be delta-neutral</span>
+<span style="background:rgba(20,184,166,0.22);color:#011713;padding:1px 7px;border-radius:3px;">Teal — shares call seller must hold per lot to be delta-neutral</span>
 <br>
 <span style="color:#6b7280;">Darker shade = #1 rank · Lighter shade = #2 rank &nbsp;·&nbsp;
 GEX in Cr (peak ≥ ₹1Cr) or L otherwise</span>
