@@ -625,6 +625,13 @@ if st.session_state.eq_data_loaded and st.session_state.eq_gex_df is not None:
         with col_b:
             st.markdown("### 🔑 Key Levels")
             st.markdown(f"""
+
+# Call Resistance is the strike with the largest negative Call GEX (Dealers short gamma)
+call_gex_top = gex_df['Call GEX'].idxmin() 
+
+# Put Support is the strike with the largest positive Put GEX (Dealers long gamma)
+put_gex_base = gex_df['Put GEX'].idxmax()
+
 | Level | Price | Distance |
 |:------|------:|---------:|
 | 🔴 Call Wall(OI)  | {call_wall:,.0f}  | {call_wall-spot_price:+.0f} |
