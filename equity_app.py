@@ -624,17 +624,16 @@ if st.session_state.eq_data_loaded and st.session_state.eq_gex_df is not None:
             )
         with col_b:
             st.markdown("### 🔑 Key Levels")
-            st.markdown("""
-            
+            st.markdown(f"""
 | Level | Price | Distance |
 |:------|------:|---------:|
-| 💹 Spot | ₹{spot_price:,.2f} | — |
-| 🔴 Call Wall (OI) | ₹{call_wall:,.0f} | {call_wall-spot_price:+.0f} |
-| 🟢 Put Wall (OI) | ₹{put_wall:,.0f} | {put_wall-spot_price:+.0f} |
-| 🔄 Gamma Flip | ₹{gamma_flip:,.0f} | {gamma_flip-spot_price:+.0f} |
-| 🎯 Max Pain | ₹{max_pain:,.0f} | {max_pain-spot_price:+.0f} |
-
+| 🔴 Call Wall  | ₹{call_wall:,.0f}  | {call_wall-spot_price:+.0f} |
+| 🟢 Put Wall   | ₹{put_wall:,.0f}   | {put_wall-spot_price:+.0f}  |
+| 🔄 Gamma Flip | ₹{gamma_flip:,.0f} | {gamma_flip-spot_price:+.0f}|
+| 🎯 Max Pain   | ₹{max_pain:,.0f}   | {max_pain-spot_price:+.0f}  |
+| 💹 Spot       | ₹{spot_price:,.2f} | — |
 """)
+
             
         st.markdown("### 📝 GEX Interpretation Guide for Equity")
         st.markdown(f"""
