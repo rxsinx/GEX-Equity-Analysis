@@ -851,25 +851,6 @@ Spot is **{'ABOVE' if spot_price > gamma_flip else 'BELOW'}** the flip point.
 
         dm_fmt, dm_num = build_equity_matrix(gex_df, spot_price, gamma_levels, si)
 
-        # ── CONVERT GEX ROWS FROM LAKHS (L) TO CRORES (Cr) ────────────────────
-        gex_target_rows = [idx for idx in dm_num.index if any(p in str(idx) for p in ["Call GEX", "Put GEX", "Net GEX"])]
-    
-        for idx in gex_target_rows:
-            new_idx = str(idx).replace("(L)", "(Cr)")
-            
-            # 1. Update the numeric dataframe (dividing raw values by 100)
-            dm_num.loc[idx] = pd.to_numeric(dm_num.loc[idx], errors='coerce') / 100.0
-            dm_num = dm_num.rename(index={idx: new_idx})
-            
-            # 2. Re-format the display grid strings to match 2 decimal places
-            for col in dm_fmt.columns:
-                try:
-                    clean_string_val = str(dm_fmt.loc[idx, col]).replace(",", "")
-                    dm_fmt.loc[idx, col] = f"{float(clean_string_val) / 100.0:,.2f}"
-                except ValueError:
-                    pass
-            dm_fmt = dm_fmt.rename(index={idx: new_idx})
-        # ─────────────────────────────────────────────────────────────
         atm_strike   = int(get_atm_strike(spot_price, si))
         strikes_only = dm_fmt.columns.drop("TOTAL") if "TOTAL" in dm_fmt.columns else dm_fmt.columns
 
@@ -888,6 +869,32 @@ Spot is **{'ABOVE' if spot_price > gamma_flip else 'BELOW'}** the flip point.
         row_put_oi   = _row("Put OI")
         row_call_iv  = "Call IV%"
         row_put_iv   = "Put IV%"
+        row_call_delta = "Call Δ"
+        row_put_delta  = "Put Δ"
+        row_prob     = "Put Δ Prob% ↓ expiry"
+        row_hedge    = "Shares to Buy (Δ hedge)"
+
+        # ── inject hedge shares row into both dm_fmt and dm_num ──────────────
+        # Formula: lot_size × call_delta, rounded to nearest integer.
+        # This is the minimum shares a call seller must hold to be delta-neutral.
+        if row_call_delta in dm_num.index:
+            hedge_vals = {}
+            for col in dm_num.columns:
+                if col == "TOTAL":
+                    hedge_vals[col] = pd.NA
+                    continue
+                raw = dm_num.loc[row_call_delta, col]
+                try:
+                    hedge_vals[col] = int(round(float(raw) * lot_size))
+                except (TypeError, ValueError):
+                    hedge_vals[col] = pd.NA
+            # append to numeric df
+            dm_num.loc[row_hedge] = hedge_vals
+            # append formatted: plain integer string (no decimal)
+            dm_fmt.loc[row_hedge] = {
+                col: ("—" if pd.isna(v) else str(int(v)))
+                for col, v in hedge_vals.items()
+            }
 
         # ── helper: top-N column indices from a numeric row ───────────────────
         def _top_n(row_key, n, largest=True):
@@ -911,6 +918,9 @@ Spot is **{'ABOVE' if spot_price > gamma_flip else 'BELOW'}** the flip point.
         put_oi_top    = _top_n(row_put_oi,   2, largest=True)
         call_iv_top   = _top_n(row_call_iv,  2, largest=True)   # most volatile call strikes
         put_iv_top    = _top_n(row_put_iv,   2, largest=True)   # most volatile put strikes
+        # Prob row: highest prob = deepest ITM, lowest prob = strongest OTM floor
+        prob_high     = _top_n(row_prob,     2, largest=True)
+        prob_low      = _top_n(row_prob,     2, largest=False)
 
         # ── colour palette ────────────────────────────────────────────────────
         # Put GEX (support) → green tones
@@ -1001,6 +1011,56 @@ Spot is **{'ABOVE' if spot_price > gamma_flip else 'BELOW'}** the flip point.
                 if len(put_iv_top) >= 2:
                     styles.loc[row_put_iv, put_iv_top[1]] = _IV_2
 
+            # ── Put Δ Prob% row ───────────────────────────────────────────
+            # High prob (≥45%) = strike is ITM / near ATM → red (danger zone)
+            # Low prob  (<15%) = strike is deep OTM floor  → green (safe floor)
+            _PROB_HIGH_1 = "background-color:rgba(239,68,68,0.65);color:white;font-weight:bold;"
+            _PROB_HIGH_2 = "background-color:rgba(239,68,68,0.30);color:white;"
+            _PROB_LOW_1  = "background-color:rgba(34,197,94,0.65);color:white;font-weight:bold;"
+            _PROB_LOW_2  = "background-color:rgba(34,197,94,0.30);color:white;"
+            if row_prob in df.index:
+                if len(prob_high) >= 1:
+                    styles.loc[row_prob, prob_high[0]] = _PROB_HIGH_1
+                if len(prob_high) >= 2:
+                    styles.loc[row_prob, prob_high[1]] = _PROB_HIGH_2
+                if len(prob_low) >= 1:
+                    styles.loc[row_prob, prob_low[0]] = _PROB_LOW_1
+                if len(prob_low) >= 2:
+                    styles.loc[row_prob, prob_low[1]] = _PROB_LOW_2
+
+            # ── Put Δ row: gradient green for -0.30 to 0 (safe OTM zone) ─
+            # -0.01 to -0.10 → lightest green  (deep OTM, very safe)
+            # -0.10 to -0.20 → medium green    (OTM buffer)
+            # -0.20 to -0.30 → strong green    (approaching ATM boundary)
+            # outside range   → no colour (ITM or beyond threshold)
+            if row_put_delta in df.index:
+                for col in strikes_only:
+                    try:
+                        pv = float(dm_num.loc[row_put_delta, col])
+                    except (TypeError, ValueError, KeyError):
+                        continue
+                    if -0.30 <= pv <= 0:
+                        intensity = abs(pv) / 0.30          # 0.0 (near 0) → 1.0 (at -0.30)
+                        alpha     = round(0.20 + intensity * 0.50, 2)   # 0.20 → 0.70
+                        styles.loc[row_put_delta, col] = (
+                            f"background-color:rgba(34,197,94,{alpha});"
+                            f"color:white;"
+                            + ("font-weight:bold;" if intensity > 0.65 else "")
+                        )
+
+            # ── Shares to Buy row: teal background, bold ──────────────────
+            if row_hedge in df.index:
+                for col in strikes_only:
+                    try:
+                        hv = dm_num.loc[row_hedge, col]
+                        if not pd.isna(hv):
+                            styles.loc[row_hedge, col] = (
+                                "background-color:rgba(20,184,166,0.22);"
+                                "color:#99f6e4;font-weight:bold;"
+                            )
+                    except (TypeError, ValueError, KeyError):
+                        continue
+
             return styles
 
         st.dataframe(
@@ -1011,19 +1071,44 @@ Spot is **{'ABOVE' if spot_price > gamma_flip else 'BELOW'}** the flip point.
 
         # ── Colour legend ─────────────────────────────────────────────────────
         st.markdown("""
-<div style="font-size:12px;color:#9ca3af;padding:6px 0 2px 0;line-height:2.0;">
+<div style="font-size:12px;color:#9ca3af;padding:6px 0 2px 0;line-height:2.2;">
 <b>Highlight Legend</b> &nbsp;|&nbsp;
-<span style="background:rgba(34,197,94,0.70);color:white;padding:1px 7px;border-radius:3px;">🟢 Put GEX </span>&nbsp;
-<span style="background:rgba(239,68,68,0.70);color:white;padding:1px 7px;border-radius:3px;">🔴 Call GEX (–ve)</span>&nbsp;
-<span style="background:rgba(16,185,129,0.70);color:white;padding:1px 7px;border-radius:3px;">🟩 Net GEX (+ve)</span>&nbsp;
-<span style="background:rgba(139,92,246,0.70);color:white;padding:1px 7px;border-radius:3px;">🟣 Net GEX (-ve)</span>&nbsp;
-<span style="background:rgba(245,158,11,0.70);color:white;padding:1px 7px;border-radius:3px;">🟡 Call OI</span>&nbsp;
-<span style="background:rgba(6,182,212,0.70);color:white;padding:1px 7px;border-radius:3px;">🔵 Put OI</span>&nbsp;
-<span style="background:rgba(249,115,22,0.70);color:white;padding:1px 7px;border-radius:3px;">🟠 IV Hottest</span>&nbsp;
-<span style="background:rgba(250,204,21,0.25);color:black;border:2px solid #fbbf24;padding:1px 7px;border-radius:3px;">🟡 ATM Strike</span>
-<br><span style="color:#6b7280;">Darker shade = #1 rank · Lighter shade = #2 rank</span>
+<span style="background:rgba(34,197,94,0.70);color:white;padding:1px 7px;border-radius:3px;">🟢 Put GEX Top-2</span>&nbsp;
+<span style="background:rgba(239,68,68,0.70);color:white;padding:1px 7px;border-radius:3px;">🔴 Call GEX Bot-2 (most –ve)</span>&nbsp;
+<span style="background:rgba(16,185,129,0.70);color:white;padding:1px 7px;border-radius:3px;">🟩 Net GEX Top-2</span>&nbsp;
+<span style="background:rgba(139,92,246,0.70);color:white;padding:1px 7px;border-radius:3px;">🟣 Net GEX Bot-2</span>&nbsp;
+<span style="background:rgba(245,158,11,0.70);color:white;padding:1px 7px;border-radius:3px;">🟡 Call OI Top-2</span>&nbsp;
+<span style="background:rgba(6,182,212,0.70);color:white;padding:1px 7px;border-radius:3px;">🔵 Put OI Top-2</span>&nbsp;
+<span style="background:rgba(249,115,22,0.70);color:white;padding:1px 7px;border-radius:3px;">🟠 IV Hottest Top-2</span>&nbsp;
+<span style="background:rgba(250,204,21,0.25);color:white;border:2px solid #fbbf24;padding:1px 7px;border-radius:3px;">🟡 ATM Strike</span>
+<br>
+<b>Put Δ row</b> &nbsp;|&nbsp;
+<span style="background:rgba(34,197,94,0.20);color:white;padding:1px 7px;border-radius:3px;">Light green: −0.01 to −0.10 (deep OTM)</span>&nbsp;
+<span style="background:rgba(34,197,94,0.45);color:white;padding:1px 7px;border-radius:3px;">Mid green: −0.10 to −0.20 (OTM buffer)</span>&nbsp;
+<span style="background:rgba(34,197,94,0.70);color:white;padding:1px 7px;border-radius:3px;">Strong green: −0.20 to −0.30 (near boundary)</span>&nbsp;
+— No colour outside −0.30 to 0 range
+<br>
+<b>Put Δ Prob% row</b> &nbsp;|&nbsp;
+<span style="background:rgba(239,68,68,0.65);color:white;padding:1px 7px;border-radius:3px;">🔴 High prob ≥45% — ITM/near ATM, breach risk</span>&nbsp;
+<span style="background:rgba(34,197,94,0.65);color:white;padding:1px 7px;border-radius:3px;">🟢 Low prob &lt;15% — deep OTM floor, unlikely to touch</span>
+<br>
+<b>Shares to Buy (Δ hedge) row</b> &nbsp;|&nbsp;
+<span style="background:rgba(20,184,166,0.22);color:#99f6e4;padding:1px 7px;border-radius:3px;">Teal — shares call seller must hold per lot to be delta-neutral</span>
+<br>
+<span style="color:#6b7280;">Darker shade = #1 rank · Lighter shade = #2 rank &nbsp;·&nbsp;
+GEX in Cr (peak ≥ ₹1Cr) or L otherwise</span>
 </div>
 """, unsafe_allow_html=True)
+
+        st.markdown("""
+**Put Δ Probability — How to Read:**
+- Each cell shows the market-implied probability that the stock closes **below that strike** at expiry
+- Derived from: `abs(Put Delta) × 100`
+- **Example:** Put Δ = −0.22 → **22% probability** stock expires below this strike
+- 🔴 High probability strike (≥45%): price is near or already through this level — active danger zone
+- 🟢 Low probability strike (<15%): deep OTM floor, market prices less than 1-in-7 chance of reaching — acts as structural support
+- **Trading use:** Short puts at strikes with <20% probability for maximum premium efficiency with limited breach risk
+""")
 
     # ── TAB 7: Greeks ─────────────────────────────────────────────────────────
     with tab7:
