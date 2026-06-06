@@ -633,32 +633,7 @@ if st.session_state.eq_data_loaded and st.session_state.eq_gex_df is not None:
 | 🎯 Max Pain   | ₹{max_pain:,.0f}   | {max_pain-spot_price:+.0f}  |
 | 💹 Spot       | ₹{spot_price:,.2f} | — |
 """)
-            st.markdown("### 📊 Regime")
-            regime_label, regime_color = gex_regime(net_gex)
-            st.markdown(f"""
-<div style="background:{regime_color}22;border:2px solid {regime_color};
-border-radius:8px;padding:12px;text-align:center;margin:8px 0;">
-<div style="font-size:1.2rem;font-weight:bold;color:{regime_color};">{regime_label}</div>
-<div style="font-size:0.78rem;color:#94a3b8;margin-top:4px;">
-{"Dealers DAMPEN moves (mean-revert)" if net_gex > 0 else "Dealers AMPLIFY moves (trend-follow)"}
-</div>
-</div>
-""", unsafe_allow_html=True)
-
-            st.markdown("### 📌 PCR Signal")
-            pcr_lbl, pcr_col = pcr_signal(pcr)
-            st.markdown(f"""
-<div style="background:{pcr_col}22;border:1px solid {pcr_col};
-border-radius:6px;padding:8px;font-size:0.82rem;text-align:center;">
-{pcr_lbl}<br>
-<span style="font-size:0.70rem;color:#94a3b8;">OI PCR: {pcr:.2f} | Vol PCR: {vol_pcr:.2f}</span>
-</div>
-""", unsafe_allow_html=True)
-
-            st.markdown("### ⏰ IV")
-            st.info(iv_percentile_label(atm_iv))
-
-        st.markdown("---")
+            
         st.markdown("### 📝 GEX Interpretation Guide for Equity")
         st.markdown(f"""
 **{symbol}** GEX Analysis — Understanding Dealer Positioning
