@@ -640,7 +640,7 @@ put_gex_base = gex_df['Put GEX'].idxmax()
 | 🎯 Max Pain   | {max_pain:,.0f}   | {max_pain-spot_price:+.0f}  |
 | 💹 Spot       | {spot_price:,.2f} | — |
 | 🧱 Call Resistance (GEX) | {call_gex_top:,.0f} | {call_gex_top-spot_price:+.0f} |
-| 🛏️ Put Support (GEX) | {put_gex_top:,.0f} | {put_gex_top-spot_price:+.0f} |
+| 🛏️ Put Support (GEX) | {put_gex_base:,.0f} | {put_gex_base-spot_price:+.0f} |
 """)
             
         st.markdown("### 📝 GEX Interpretation Guide for Equity")
