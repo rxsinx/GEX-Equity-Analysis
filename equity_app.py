@@ -627,6 +627,10 @@ if st.session_state.eq_data_loaded and st.session_state.eq_gex_df is not None:
             st.markdown(f"""
 
 
+# 1. Find the exact Strike Prices for GEX Support/Resistance
+# Make sure 'Strike' exactly matches the name of the strike column in your dataframe!
+call_gex_top = gex_df.loc[gex_df['Call GEX'].idxmin(), 'Strike'] 
+put_gex_base = gex_df.loc[gex_df['Put GEX'].idxmax(), 'Strike']
 
 | Level | Price | Distance |
 |:------|------:|---------:|
@@ -635,7 +639,8 @@ if st.session_state.eq_data_loaded and st.session_state.eq_gex_df is not None:
 | 🔄 Gamma Flip | {gamma_flip:,.0f} | {gamma_flip-spot_price:+.0f}|
 | 🎯 Max Pain   | {max_pain:,.0f}   | {max_pain-spot_price:+.0f}  |
 | 💹 Spot       | {spot_price:,.2f} | — |
-
+| 🧱 Call Resistance (GEX) | {call_gex_top:,.0f} | {call_gex_top-spot_price:+.0f} |
+| 🛏️ Put Support (GEX) | {put_gex_base:,.0f} | {put_gex_base-spot_price:+.0f} |
 
 """)
             
