@@ -624,10 +624,6 @@ if st.session_state.eq_data_loaded and st.session_state.eq_gex_df is not None:
             )
         with col_b:
             st.markdown("### 🔑 Key Levels")
-            # 1. Ensure these calculations exist (using the top-1 ranked strikes from your logic)
-            call_resistance_gex = call_gex_bot[0] if len(call_gex_bot) > 0 else spot_price
-            put_support_gex = put_gex_top[0] if len(put_gex_top) > 0 else spot_price
-            
             st.markdown(f"""
 
 
@@ -635,12 +631,9 @@ if st.session_state.eq_data_loaded and st.session_state.eq_gex_df is not None:
 |:------|------:|---------:|
 | 💹 Spot | ₹{spot_price:,.2f} | — |
 | 🔴 Call Wall (OI) | ₹{call_wall:,.0f} | {call_wall-spot_price:+.0f} |
-| 🧱 Call Res. (GEX) | ₹{call_resistance_gex:,.0f} | {call_resistance_gex-spot_price:+.0f} |
 | 🟢 Put Wall (OI) | ₹{put_wall:,.0f} | {put_wall-spot_price:+.0f} |
-| 🛏️ Put Supp. (GEX) | ₹{put_support_gex:,.0f} | {put_support_gex-spot_price:+.0f} |
 | 🔄 Gamma Flip | ₹{gamma_flip:,.0f} | {gamma_flip-spot_price:+.0f} |
 | 🎯 Max Pain | ₹{max_pain:,.0f} | {max_pain-spot_price:+.0f} |
-
 
 """)
             
