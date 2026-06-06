@@ -851,6 +851,25 @@ Spot is **{'ABOVE' if spot_price > gamma_flip else 'BELOW'}** the flip point.
 
         dm_fmt, dm_num = build_equity_matrix(gex_df, spot_price, gamma_levels, si)
 
+        # ── CONVERT GEX ROWS FROM LAKHS (L) TO CRORES (Cr) ────────────────────
+        gex_target_rows = [idx for idx in dm_num.index if any(p in str(idx) for p in ["Call GEX", "Put GEX", "Net GEX"])]
+    
+        for idx in gex_target_rows:
+            new_idx = str(idx).replace("(L)", "(Cr)")
+            
+            # 1. Update the numeric dataframe (dividing raw values by 100)
+            dm_num.loc[idx] = pd.to_numeric(dm_num.loc[idx], errors='coerce') / 100.0
+            dm_num = dm_num.rename(index={idx: new_idx})
+            
+            # 2. Re-format the display grid strings to match 2 decimal places
+            for col in dm_fmt.columns:
+                try:
+                    clean_string_val = str(dm_fmt.loc[idx, col]).replace(",", "")
+                    dm_fmt.loc[idx, col] = f"{float(clean_string_val) / 100.0:,.2f}"
+                except ValueError:
+                    pass
+            dm_fmt = dm_fmt.rename(index={idx: new_idx})
+        # ─────────────────────────────────────────────────────────────
         atm_strike   = int(get_atm_strike(spot_price, si))
         strikes_only = dm_fmt.columns.drop("TOTAL") if "TOTAL" in dm_fmt.columns else dm_fmt.columns
 
