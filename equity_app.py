@@ -624,11 +624,13 @@ if st.session_state.eq_data_loaded and st.session_state.eq_gex_df is not None:
             )
         with col_b:
             st.markdown("### 🔑 Key Levels")
+            # 1. Ensure these calculations exist (using the top-1 ranked strikes from your logic)
+            call_resistance_gex = call_gex_bot[0] if len(call_gex_bot) > 0 else spot_price
+            put_support_gex = put_gex_top[0] if len(put_gex_top) > 0 else spot_price
+            
             st.markdown(f"""
 
-# #1 ranked strike is the first element in the list
-call_resistance_gex = call_gex_bot[0] if len(call_gex_bot) > 0 else spot_price
-put_support_gex = put_gex_top[0] if len(put_gex_top) > 0 else spot_price
+
 | Level | Price | Distance |
 |:------|------:|---------:|
 | 💹 Spot | ₹{spot_price:,.2f} | — |
