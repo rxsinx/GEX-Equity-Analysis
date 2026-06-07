@@ -649,6 +649,7 @@ def plot_gex_oi_clustered(df_chain, selected_stock, lower_bound, upper_bound):
     
     # Initialize dual Y-axis canvas
     fig = make_subplots(specs=[[{"secondary_y": True}]])
+
     
     # ------------------ COLUMNS: GEX (Primary Y-Axis) ------------------
     # Call GEX Column (Left half of strike cluster via offsetgroup)
@@ -674,6 +675,7 @@ def plot_gex_oi_clustered(df_chain, selected_stock, lower_bound, upper_bound):
         ),
         secondary_y=False
     )
+
     
     # ------------------ LINES: Open Interest (Secondary Y-Axis) ------------------
     # Call OI Line (Dotted Amber/Orange Line overlay)
@@ -701,10 +703,19 @@ def plot_gex_oi_clustered(df_chain, selected_stock, lower_bound, upper_bound):
         ),
         secondary_y=True
     )
+
+    # ------------------ SPOT PRICE LINE ------------------
+    fig.add_vline(
+        x=spot_price,
+        line=dict(color='#60a5fa', width=2, dash='dash'), # Blue dashed line
+        annotation_text=f"  Spot: ₹{spot_price:,.2f}",
+        annotation_position="top right",
+        annotation_font=dict(size=11, color='#60a5fa')
+    )
     
     # ------------------ LAYOUT CONFIGURATION ------------------
     fig.update_layout(
-        title_text=f"Call/Put GEX Bars with OI Lines Overlay — {selected_stock}",
+        title_text=f"Call/Put GEX Bars with OI Lines — {selected_stock}",
         barmode='group',
         xaxis_title="Strike Price (₹)",
         hovermode="x unified",
