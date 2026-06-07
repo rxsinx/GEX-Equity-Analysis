@@ -680,11 +680,11 @@ def plot_gex_oi_clustered(df_chain, selected_stock, lower_bound, upper_bound):
     fig.add_trace(
         go.Scatter(
             x=df_filtered['Strike'],
-            y=df_filtered['Call_OI_Lakhs'],
-            name='Call OI (Lakhs)',
-            mode='lines+markers',
-            line=dict(color='#f59e0b', width=2.5, dash='dot'),
-            marker=dict(size=6)
+            y=df_filtered['Call_OI_Lacs'],
+            name='Call OI (Lacs)',
+            mode='lines',
+            line=dict(color='#f59e0b', width=2, dash='dot')
+            
         ),
         secondary_y=True
     )
@@ -693,11 +693,11 @@ def plot_gex_oi_clustered(df_chain, selected_stock, lower_bound, upper_bound):
     fig.add_trace(
         go.Scatter(
             x=df_filtered['Strike'],
-            y=df_filtered['Put_OI_Lakhs'],
-            name='Put OI (Lakhs)',
-            mode='lines+markers',
-            line=dict(color='#3b82f6', width=2.5),
-            marker=dict(size=6)
+            y=df_filtered['Put_OI_Lacs'],
+            name='Put OI (Lacs)',
+            mode='lines',
+            line=dict(color='#3b82f6', width=2)
+            
         ),
         secondary_y=True
     )
@@ -713,6 +713,6 @@ def plot_gex_oi_clustered(df_chain, selected_stock, lower_bound, upper_bound):
     
     # Axis titles
     fig.update_yaxes(title_text="<b>Gamma Exposure (Cr)</b>", secondary_y=False)
-    fig.update_yaxes(title_text="<b>Open Interest (Lakhs)</b>", secondary_y=True)
+    fig.update_yaxes(title_text="<b>Open Interest (Lacs)</b>", secondary_y=True)
     
     return fig
