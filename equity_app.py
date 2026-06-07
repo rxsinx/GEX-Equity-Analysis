@@ -227,7 +227,7 @@ st.markdown(
     unsafe_allow_html=True)
 st.markdown(
     '<div style="text-align:center;margin-bottom:4px;">'
-    '<span class="monthly-badge">📅 MONTHLY ONLY — All equity options expire last Thursday</span>'
+    '<span class="monthly-badge">📅 MONTHLY ONLY — All equity options expire last Tuesday</span>'
     '&nbsp;&nbsp;'
     '<span class="eq-badge">🏦 NFO Exchange</span>'
     '</div>',
