@@ -642,17 +642,4 @@ def build_equity_matrix(
     ]
     dm["TOTAL"] = totals
 
-    # ── Format: probability row gets descriptive label, rest get 2dp ─────────
-    def _fmt_cell(row_label, x):
-        if pd.isna(x):
-            return "—"
-        if row_label == _PROB_ROW:
-            return _prob_label(float(x))
-        return f"{x:.2f}"
-
-    dm_fmt = pd.DataFrame(
-        {col: {row: _fmt_cell(row, dm.loc[row, col]) for row in dm.index}
-         for col in dm.columns}
-    )
-
-    return dm_fmt, dm
+    
