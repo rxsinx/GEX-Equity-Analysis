@@ -19,6 +19,7 @@ from typing import Optional, Dict
 
 import numpy as np
 import pandas as pd
+import streamlit as st
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
@@ -599,47 +600,41 @@ def build_equity_matrix(
     total_put_oi  = float(gamma_levels.get("total_put_oi", 0))
     total_pcr     = total_put_oi / total_call_oi if total_call_oi > 0 else 0.0
 
-    # ── GEX scale: abs() across full column (call_gex values are negative) ────
-    gex_max_abs = max(
-        gex_df["call_gex"].abs().max(),
-        gex_df["put_gex"].abs().max(),
-    )
-    div_gex  = 1e7 if gex_max_abs >= 1e7 else 1e5
+    div_gex = 1e7 if abs(gex_df["call_gex"].max()) > 1e7 else 1e5
     gex_unit = "Cr" if div_gex == 1e7 else "L"
     oi_unit  = "L" if total_call_oi > 1e5 else ""
     oi_div   = 1e5 if total_call_oi > 1e5 else 1
 
     grid = {
-        "Strike Price":           matrix["strike"].tolist(),
+        f"Strike Price":       matrix["strike"].tolist(),
         f"Call GEX ({gex_unit})": (matrix["call_gex"] / div_gex).tolist(),
         f"Put GEX ({gex_unit})":  (matrix["put_gex"]  / div_gex).tolist(),
         f"Net GEX ({gex_unit})":  ((matrix["call_gex"] + matrix["put_gex"]) / div_gex).tolist(),
         f"Call OI ({oi_unit})":   (matrix["call_oi"] / oi_div).tolist(),
         f"Put OI ({oi_unit})":    (matrix["put_oi"]  / oi_div).tolist(),
-        "PCR":                    matrix["pcr"].tolist(),
-        "Call IV%":               matrix["call_iv"].tolist(),
-        "Put IV%":                matrix["put_iv"].tolist(),
-        "Call LTP":               matrix["call_ltp"].tolist(),
-        "Put LTP":                matrix["put_ltp"].tolist(),
-        "Call Δ":                 matrix["call_delta"].tolist(),
-        "Put Δ":                  matrix["put_delta"].tolist(),
-        
+        "PCR":                 matrix["pcr"].tolist(),
+        "Call IV%":            matrix["call_iv"].tolist(),
+        "Put IV%":             matrix["put_iv"].tolist(),
+        "Call LTP":            matrix["call_ltp"].tolist(),
+        "Put LTP":             matrix["put_ltp"].tolist(),
+        "Call Δ":              matrix["call_delta"].tolist(),
+        "Put Δ":               matrix["put_delta"].tolist(),
     }
 
     dm = pd.DataFrame(grid).set_index("Strike Price").T
 
     totals = [
-        gex_df["call_gex"].sum() / div_gex,   # Call GEX
-        gex_df["put_gex"].sum()  / div_gex,   # Put GEX
-        net_gex_total / div_gex,              # Net GEX
-        total_call_oi / oi_div,               # Call OI
-        total_put_oi  / oi_div,               # Put OI
-        total_pcr,                            # PCR
-        pd.NA, pd.NA,                         # Call IV%, Put IV%
-        pd.NA, pd.NA,                         # Call LTP, Put LTP
-        pd.NA, pd.NA,                         # Call Δ, Put Δ
-        
+        gex_df["call_gex"].sum() / div_gex,
+        gex_df["put_gex"].sum()  / div_gex,
+        net_gex_total / div_gex,
+        total_call_oi / oi_div,
+        total_put_oi  / oi_div,
+        total_pcr,
+        pd.NA, pd.NA,   # IV — no meaningful total
+        pd.NA, pd.NA,   # LTP — no meaningful total
+        pd.NA, pd.NA,   # Deltas — no meaningful total
     ]
     dm["TOTAL"] = totals
 
-    
+    dm_fmt = dm.map(lambda x: "—" if pd.isna(x) else f"{x:.2f}")
+    return dm_fmt, dm
