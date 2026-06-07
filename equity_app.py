@@ -837,6 +837,7 @@ Spot is **{'ABOVE' if spot_price > gamma_flip else 'BELOW'}** the flip point.
         fig_oi_clustered = plot_gex_oi_clustered(
             df_chain=chart_df,
             selected_stock=symbol,
+            spot_price=spot_price,  # <--- ADD THIS LINE HERE
             lower_bound=spot_price * (1 - st.session_state.eq_strike_range_pct / 100),
             upper_bound=spot_price * (1 + st.session_state.eq_strike_range_pct / 100)
         )
