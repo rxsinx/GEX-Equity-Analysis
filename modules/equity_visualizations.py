@@ -659,7 +659,7 @@ def plot_gex_oi_clustered(df_chain, selected_stock, spot_price, lower_bound, upp
             y=df_filtered['Call_GEX_Cr'],
             name='Call GEX (Cr)',
             marker_color='#ef4444',  # Red
-            
+            opacity=0.75
         ),
         secondary_y=False
     )
@@ -671,7 +671,7 @@ def plot_gex_oi_clustered(df_chain, selected_stock, spot_price, lower_bound, upp
             y=df_filtered['Put_GEX_Cr'],
             name='Put GEX (Cr)',
             marker_color='#22c55e',  # Green
-            
+            opacity=0.75
         ),
         secondary_y=False
     )
