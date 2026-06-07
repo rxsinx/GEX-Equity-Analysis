@@ -638,3 +638,79 @@ def build_equity_matrix(
 
     dm_fmt = dm.map(lambda x: "—" if pd.isna(x) else f"{x:.2f}")
     return dm_fmt, dm
+
+# NEW PLOT 
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+
+def plot_gex_oi_clustered(df_chain, selected_stock, lower_bound, upper_bound):
+    # Filter data around the spot price for clean visualization
+    df_filtered = df_chain[(df_chain['Strike'] >= lower_bound) & (df_chain['Strike'] <= upper_bound)]
+    
+    # Initialize dual Y-axis canvas
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
+    
+    # ------------------ LEFT SIDE COLUMNS: GEX (Primary Y-Axis) ------------------
+    # Call GEX Column
+    fig.add_trace(
+        go.Bar(
+            x=df_filtered['Strike'],
+            y=df_filtered['Call_GEX_Cr'],
+            name='Call GEX (Cr)',
+            marker_color='#ef4444',  # Red
+            offsetgroup=1
+        ),
+        secondary_y=False
+    )
+    
+    # Put GEX Column
+    fig.add_trace(
+        go.Bar(
+            x=df_filtered['Strike'],
+            y=df_filtered['Put_GEX_Cr'],
+            name='Put GEX (Cr)',
+            marker_color='#22c55e',  # Green
+            offsetgroup=1            # Shares group 1 to sit on the left side
+        ),
+        secondary_y=False
+    )
+    
+    # ------------------ RIGHT SIDE COLUMNS: OI (Secondary Y-Axis) ------------------
+    # Call OI Column
+    fig.add_trace(
+        go.Bar(
+            x=df_filtered['Strike'],
+            y=df_filtered['Call_OI_Lakhs'],
+            name='Call OI (Lakhs)',
+            marker_color='#f59e0b',  # Amber/Orange
+            offsetgroup=2            # Shifts to the right side of the strike tick
+        ),
+        secondary_y=True
+    )
+    
+    # Put OI Column
+    fig.add_trace(
+        go.Bar(
+            x=df_filtered['Strike'],
+            y=df_filtered['Put_OI_Lakhs'],
+            name='Put OI (Lakhs)',
+            marker_color='#3b82f6',  # Blue
+            offsetgroup=2            # Clusters right next to Call OI
+        ),
+        secondary_y=True
+    )
+    
+    # ------------------ LAYOUT CONFIGURATION ------------------
+    fig.update_layout(
+        title_text=f"Call/Put GEX vs Open Interest Clustered Chart — {selected_stock}",
+        barmode='group',
+        xaxis_title="Strike Price (₹)",
+        hovermode="x unified",
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+    )
+    
+    # Axis titles
+    fig.update_yaxes(title_text="<b>Gamma Exposure (Cr)</b>", secondary_y=False)
+    fig.update_yaxes(title_text="<b>Open Interest (Lakhs)</b>", secondary_y=True)
+    
+    return fig
