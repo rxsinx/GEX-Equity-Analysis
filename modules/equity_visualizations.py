@@ -707,10 +707,10 @@ def plot_gex_oi_clustered(df_chain, selected_stock, spot_price, lower_bound, upp
     # ------------------ SPOT PRICE LINE ------------------
     fig.add_vline(
         x=spot_price,
-        line=dict(color='#60a5fa', width=2, dash='dash'), # Blue dashed line
-        annotation_text=f"  Spot: ₹{spot_price:,.2f}",
+        line=dict(color='#151617', width=1, dash='dash'), # Blue dashed line
+        annotation_text=f"  Spot: ₹{spot_price:,.0f}",
         annotation_position="top right",
-        annotation_font=dict(size=11, color='#60a5fa')
+        annotation_font=dict(size=10, color='#60a5fa')
     )
     
     # ------------------ LAYOUT CONFIGURATION ------------------
