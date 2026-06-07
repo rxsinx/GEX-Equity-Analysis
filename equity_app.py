@@ -51,6 +51,7 @@ from modules.equity_visualizations import (
     plot_pin_risk_gauge,
     plot_gex_per_rupee,
     build_equity_matrix,
+    plot_gex_oi_clustered,
 )
 
 IST = pytz.timezone("Asia/Kolkata")
@@ -1041,7 +1042,36 @@ Spot is **{'ABOVE' if spot_price > gamma_flip else 'BELOW'}** the flip point.
                         continue
 
             return styles
+        
+        #-----------New graph
+        st.subheader(f"Call/Put GEX vs Open Interest — {selected_stock}")
+    
+            # 1. Map your dataframe columns to match the names expected by the function
+            # Your raw dataframe likely uses lowercase names ('strike', 'call_oi', etc.)
+            chart_df = gex_df.copy()
+    
+            # Map Strikes
+            chart_df['Strike'] = chart_df['strike']
+        
+            # Map GEX values to Crores (if not already scaled in your data)
+            chart_df['Call_GEX_Cr'] = chart_df['call_gex'] / 1e7
+            chart_df['Put_GEX_Cr'] = chart_df['put_gex'] / 1e7
+        
+            # Map Open Interest to Lakhs (if not already scaled in your data)
+            chart_df['Call_OI_Lakhs'] = chart_df['call_oi'] / 1e5
+            chart_df['Put_OI_Lakhs'] = chart_df['put_oi'] / 1e5
 
+            # 2. Call the new visualization function
+            fig_oi_clustered = plot_gex_oi_clustered(
+                df_chain=chart_df,
+                selected_stock=selected_stock,
+                lower_bound=spot_price * (1 - strike_range_pct / 100),
+                upper_bound=spot_price * (1 + strike_range_pct / 100)
+            )
+    
+            # 3. Render the chart onto the Streamlit interface
+            st.plotly_chart(fig_oi_clustered, use_container_width=True)
+            
         st.dataframe(
             dm_fmt.style.apply(_style_eq_matrix, axis=None),
             use_container_width=True,
