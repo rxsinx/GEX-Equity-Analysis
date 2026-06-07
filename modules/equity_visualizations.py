@@ -659,7 +659,7 @@ def plot_gex_oi_clustered(df_chain, selected_stock, spot_price, lower_bound, upp
             y=df_filtered['Call_GEX_Cr'],
             name='Call GEX (Cr)',
             marker_color='#ef4444',  # Red
-            offsetgroup=1
+            opacity=0.8
         ),
         secondary_y=False
     )
@@ -671,7 +671,7 @@ def plot_gex_oi_clustered(df_chain, selected_stock, spot_price, lower_bound, upp
             y=df_filtered['Put_GEX_Cr'],
             name='Put GEX (Cr)',
             marker_color='#22c55e',  # Green
-            offsetgroup=2
+            opacity=0.8
         ),
         secondary_y=False
     )
@@ -716,7 +716,7 @@ def plot_gex_oi_clustered(df_chain, selected_stock, spot_price, lower_bound, upp
     # ------------------ LAYOUT CONFIGURATION ------------------
     fig.update_layout(
         title_text=f"Call/Put GEX Bars with OI Lines — {selected_stock}",
-        barmode='group',
+        barmode='relative',
         xaxis_title="Strike Price (₹)",
         hovermode="x unified",
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
