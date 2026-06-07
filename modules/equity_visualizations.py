@@ -716,7 +716,7 @@ def plot_gex_oi_clustered(df_chain, selected_stock, spot_price, lower_bound, upp
     # ------------------ LAYOUT CONFIGURATION ------------------
     fig.update_layout(
         title_text=f"Call/Put GEX Bars with OI Lines — {selected_stock}",
-        
+        barmode='overlay'
         xaxis_title="Strike Price (₹)",
         hovermode="x unified",
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
