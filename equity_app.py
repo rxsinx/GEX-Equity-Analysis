@@ -830,8 +830,8 @@ Spot is **{'ABOVE' if spot_price > gamma_flip else 'BELOW'}** the flip point.
         chart_df['Strike'] = chart_df['strike']
         chart_df['Call_GEX_Cr'] = chart_df['call_gex'] / 1e7
         chart_df['Put_GEX_Cr'] = chart_df['put_gex'] / 1e7
-        chart_df['Call_OI_Lakhs'] = chart_df['call_oi'] / 1e5
-        chart_df['Put_OI_Lakhs'] = chart_df['put_oi'] / 1e5
+        chart_df['Call_OI_Lacs'] = chart_df['call_oi'] / 1e5
+        chart_df['Put_OI_Lacs'] = chart_df['put_oi'] / 1e5
     
         # 2. Render the new clustered Call/Put GEX and OI chart at the top of Tab 2
         fig_oi_clustered = plot_gex_oi_clustered(
