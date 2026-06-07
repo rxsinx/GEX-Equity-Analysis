@@ -1005,22 +1005,7 @@ Spot is **{'ABOVE' if spot_price > gamma_flip else 'BELOW'}** the flip point.
                 if len(put_iv_top) >= 2:
                     styles.loc[row_put_iv, put_iv_top[1]] = _IV_2
 
-            # ── Put Δ Prob% row ───────────────────────────────────────────
-            # High prob (≥45%) = strike is ITM / near ATM → red (danger zone)
-            # Low prob  (<15%) = strike is deep OTM floor  → green (safe floor)
-            _PROB_HIGH_1 = "background-color:rgba(239,68,68,0.65);color:white;font-weight:bold;"
-            _PROB_HIGH_2 = "background-color:rgba(239,68,68,0.30);color:white;"
-            _PROB_LOW_1  = "background-color:rgba(34,197,94,0.65);color:white;font-weight:bold;"
-            _PROB_LOW_2  = "background-color:rgba(34,197,94,0.30);color:white;"
-            if row_prob in df.index:
-                if len(prob_high) >= 1:
-                    styles.loc[row_prob, prob_high[0]] = _PROB_HIGH_1
-                if len(prob_high) >= 2:
-                    styles.loc[row_prob, prob_high[1]] = _PROB_HIGH_2
-                if len(prob_low) >= 1:
-                    styles.loc[row_prob, prob_low[0]] = _PROB_LOW_1
-                if len(prob_low) >= 2:
-                    styles.loc[row_prob, prob_low[1]] = _PROB_LOW_2
+            
 
             # ── Put Δ row: gradient green for -0.30 to 0 (safe OTM zone) ─
             # -0.01 to -0.10 → lightest green  (deep OTM, very safe)
@@ -1068,9 +1053,9 @@ Spot is **{'ABOVE' if spot_price > gamma_flip else 'BELOW'}** the flip point.
 <div style="font-size:12px;color:#9ca3af;padding:6px 0 2px 0;line-height:2.2;">
 <b>Highlight Legend</b> &nbsp;|&nbsp;
 <span style="background:rgba(34,197,94,0.70);color:white;padding:1px 7px;border-radius:3px;">🟢 Put GEX Top-2</span>&nbsp;
-<span style="background:rgba(239,68,68,0.70);color:white;padding:1px 7px;border-radius:3px;">🔴 Call GEX Top-2 (most –ve)</span>&nbsp;
+<span style="background:rgba(239,68,68,0.70);color:white;padding:1px 7px;border-radius:3px;">🔴 Call GEX Top-2(–ve)</span>&nbsp;
 <span style="background:rgba(16,185,129,0.70);color:white;padding:1px 7px;border-radius:3px;">🟩 Net GEX Top-2</span>&nbsp;
-<span style="background:rgba(139,92,246,0.70);color:white;padding:1px 7px;border-radius:3px;">🟣 Net GEX Top-2</span>&nbsp;
+<span style="background:rgba(139,92,246,0.70);color:white;padding:1px 7px;border-radius:3px;">🟣 Net GEX Top-2(–ve)</span>&nbsp;
 <span style="background:rgba(245,158,11,0.70);color:white;padding:1px 7px;border-radius:3px;">🟡 Call OI Top-2</span>&nbsp;
 <span style="background:rgba(6,182,212,0.70);color:white;padding:1px 7px;border-radius:3px;">🔵 Put OI Top-2</span>&nbsp;
 <span style="background:rgba(249,115,22,0.70);color:white;padding:1px 7px;border-radius:3px;">🟠 IV Hottest Top-2</span>&nbsp;
@@ -1082,10 +1067,7 @@ Spot is **{'ABOVE' if spot_price > gamma_flip else 'BELOW'}** the flip point.
 <span style="background:rgba(34,197,94,0.70);color:white;padding:1px 7px;border-radius:3px;">Strong green: −0.20 to −0.30 (near boundary)</span>&nbsp;
 — No colour outside −0.30 to 0 range
 <br>
-<b>Put Δ Prob% row</b> &nbsp;|&nbsp;
-<span style="background:rgba(239,68,68,0.65);color:white;padding:1px 7px;border-radius:3px;">🔴 High prob ≥45% — ITM/near ATM, breach risk</span>&nbsp;
-<span style="background:rgba(34,197,94,0.65);color:white;padding:1px 7px;border-radius:3px;">🟢 Low prob &lt;15% — deep OTM floor, unlikely to touch</span>
-<br>
+
 <b>Shares to Buy (Δ hedge) row</b> &nbsp;|&nbsp;
 <span style="background:rgba(20,184,166,0.22);color:#011713;padding:1px 7px;border-radius:3px;">Teal — shares call seller must hold per lot to be delta-neutral</span>
 <br>
