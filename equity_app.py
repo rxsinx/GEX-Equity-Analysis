@@ -623,207 +623,33 @@ if st.session_state.eq_data_loaded and st.session_state.eq_gex_df is not None:
                 use_container_width=True,
             )
         with col_b:
-            # ── Expanded key levels table ───────────────────────────────────
-            call_gex_wall = gamma_levels.get("call_gex_wall", spot_price)
-            put_gex_wall  = gamma_levels.get("put_gex_wall",  spot_price)
-
-            def _dist(p): return f"{p - spot_price:+.0f}"
-            def _side(p): return "↑" if p > spot_price else "↓" if p < spot_price else "●"
-
             st.markdown("### 🔑 Key Levels")
             st.markdown(f"""
-<table style="width:100%;font-size:0.78rem;border-collapse:collapse;">
-<thead>
-<tr style="color:#94a3b8;border-bottom:1px solid #334155;">
-  <th style="text-align:left;padding:3px 4px;">Level</th>
-  <th style="text-align:right;padding:3px 4px;">Price</th>
-  <th style="text-align:right;padding:3px 4px;">Dist</th>
-</tr>
-</thead>
-<tbody>
-<tr style="border-bottom:1px solid #1e293b;">
-  <td style="padding:3px 4px;">💹 Spot (CMP)</td>
-  <td style="text-align:right;font-weight:bold;">₹{{spot_price:,.2f}}</td>
-  <td style="text-align:right;">—</td>
-</tr>
-<tr style="border-bottom:1px solid #1e293b;background:rgba(239,68,68,0.08);">
-  <td style="padding:3px 4px;">🔴 Call Wall (OI)</td>
-  <td style="text-align:right;color:#fca5a5;font-weight:bold;">₹{{call_wall:,.0f}}</td>
-  <td style="text-align:right;color:#fca5a5;">{{_dist(call_wall)}} {{_side(call_wall)}}</td>
-</tr>
-<tr style="border-bottom:1px solid #1e293b;background:rgba(239,68,68,0.05);">
-  <td style="padding:3px 4px;">🔴 Call Resist (GEX)</td>
-  <td style="text-align:right;color:#f87171;">₹{{call_gex_wall:,.0f}}</td>
-  <td style="text-align:right;color:#f87171;">{{_dist(call_gex_wall)}} {{_side(call_gex_wall)}}</td>
-</tr>
-<tr style="border-bottom:1px solid #1e293b;background:rgba(234,179,8,0.08);">
-  <td style="padding:3px 4px;">🔄 Gamma Flip</td>
-  <td style="text-align:right;color:#fbbf24;font-weight:bold;">₹{{gamma_flip:,.0f}}</td>
-  <td style="text-align:right;color:#fbbf24;">{{_dist(gamma_flip)}} {{_side(gamma_flip)}}</td>
-</tr>
-<tr style="border-bottom:1px solid #1e293b;background:rgba(192,132,252,0.08);">
-  <td style="padding:3px 4px;">🎯 Max Pain</td>
-  <td style="text-align:right;color:#c084fc;font-weight:bold;">₹{{max_pain:,.0f}}</td>
-  <td style="text-align:right;color:#c084fc;">{{_dist(max_pain)}} {{_side(max_pain)}}</td>
-</tr>
-<tr style="border-bottom:1px solid #1e293b;background:rgba(34,197,94,0.05);">
-  <td style="padding:3px 4px;">🟢 Put Support (GEX)</td>
-  <td style="text-align:right;color:#86efac;">₹{{put_gex_wall:,.0f}}</td>
-  <td style="text-align:right;color:#86efac;">{{_dist(put_gex_wall)}} {{_side(put_gex_wall)}}</td>
-</tr>
-<tr style="border-bottom:1px solid #1e293b;background:rgba(34,197,94,0.08);">
-  <td style="padding:3px 4px;">🟢 Put Wall (OI)</td>
-  <td style="text-align:right;color:#4ade80;font-weight:bold;">₹{{put_wall:,.0f}}</td>
-  <td style="text-align:right;color:#4ade80;">{{_dist(put_wall)}} {{_side(put_wall)}}</td>
-</tr>
-</tbody>
-</table>
-<div style="font-size:0.68rem;color:#64748b;margin-top:4px;">
-OI walls = volume concentration · GEX walls = dealer gamma peak
-</div>
-""", unsafe_allow_html=True)
+| Level | Price | Distance |
+|:------|------:|---------:|
+| 🔴 Call Wall  | ₹{call_wall:,.0f}  | {call_wall-spot_price:+.0f} |
+| 🟢 Put Wall   | ₹{put_wall:,.0f}   | {put_wall-spot_price:+.0f}  |
+| 🔄 Gamma Flip | ₹{gamma_flip:,.0f} | {gamma_flip-spot_price:+.0f}|
+| 🎯 Max Pain   | ₹{max_pain:,.0f}   | {max_pain-spot_price:+.0f}  |
+| 💹 Spot       | ₹{spot_price:,.2f} | — |
+""")
 
-            st.markdown("### 📊 Regime")
-            regime_label, regime_color = gex_regime(net_gex)
-            st.markdown(f"""
-<div style="background:{{regime_color}}22;border:2px solid {{regime_color}};
-border-radius:8px;padding:12px;text-align:center;margin:8px 0;">
-<div style="font-size:1.2rem;font-weight:bold;color:{{regime_color}};">{{regime_label}}</div>
-<div style="font-size:0.78rem;color:#94a3b8;margin-top:4px;">
-{{"Dealers DAMPEN moves (mean-revert)" if net_gex > 0 else "Dealers AMPLIFY moves (trend-follow)"}}
-</div>
-</div>
-""", unsafe_allow_html=True)
-
-            st.markdown("### 📌 PCR Signal")
-            pcr_lbl, pcr_col = pcr_signal(pcr)
-            st.markdown(f"""
-<div style="background:{{pcr_col}}22;border:1px solid {{pcr_col}};
-border-radius:6px;padding:8px;font-size:0.82rem;text-align:center;">
-{{pcr_lbl}}<br>
-<span style="font-size:0.70rem;color:#94a3b8;">OI PCR: {{pcr:.2f}} | Vol PCR: {{vol_pcr:.2f}}</span>
-</div>
-""", unsafe_allow_html=True)
-
-            st.markdown("### ⏰ IV")
-            st.info(iv_percentile_label(atm_iv))
-
-        st.markdown("---")
-
-        # ── Strike-by-Strike Matrix (embedded in Tab 1) ─────────────────────────
-        st.subheader(f"🔬 Strike-by-Strike Positioning Matrix — {symbol}")
-        st.caption("OI walls = volume concentration · GEX walls = dealer gamma peaks · Prob row = market-implied expiry probability")
-
-        _dm_fmt_t1, _dm_num_t1 = build_equity_matrix(gex_df, spot_price, gamma_levels, si)
-        _atm_t1     = int(get_atm_strike(spot_price, si))
-        _strikes_t1 = _dm_fmt_t1.columns.drop("TOTAL") if "TOTAL" in _dm_fmt_t1.columns else _dm_fmt_t1.columns
-
-        def _row_t1(prefix):
-            for idx in _dm_num_t1.index:
-                if str(idx).startswith(prefix): return idx
-            return None
-
-        _rCG = _row_t1("Call GEX"); _rPG = _row_t1("Put GEX")
-        _rNG = _row_t1("Net GEX");  _rCO = _row_t1("Call OI"); _rPO = _row_t1("Put OI")
-        _rCI = "Call IV%";           _rPI = "Put IV%"
-        _rPD = "Put Δ";         _rPR = "Put Δ Prob% ↓ expiry"
-        _rCD = "Call Δ";        _rHG = "Shares to Buy (Δ hedge)"
-
-        if _rCD in _dm_num_t1.index:
-            _hv = {}
-            for _c in _dm_num_t1.columns:
-                if _c == "TOTAL": _hv[_c] = pd.NA; continue
-                try: _hv[_c] = int(round(float(_dm_num_t1.loc[_rCD, _c]) * lot_size))
-                except: _hv[_c] = pd.NA
-            _dm_num_t1.loc[_rHG] = _hv
-            _dm_fmt_t1.loc[_rHG] = {_c: ("--" if pd.isna(_v) else str(int(_v))) for _c, _v in _hv.items()}
-
-        def _top_t1(rk, n, lg=True):
-            if rk is None or rk not in _dm_num_t1.index: return []
-            s = _dm_num_t1.loc[rk, _strikes_t1].apply(lambda x: float(x) if not pd.isna(x) else float("nan")).dropna()
-            return list((s.nlargest(n) if lg else s.nsmallest(n)).index) if not s.empty else []
-
-        _pg_top = _top_t1(_rPG,2); _cg_bot = _top_t1(_rCG,2,False)
-        _ng_top = _top_t1(_rNG,2); _ng_bot = _top_t1(_rNG,2,False)
-        _co_top = _top_t1(_rCO,2); _po_top = _top_t1(_rPO,2)
-        _ci_top = _top_t1(_rCI,2); _pi_top = _top_t1(_rPI,2)
-        _pr_hi  = _top_t1(_rPR,2); _pr_lo  = _top_t1(_rPR,2,False)
-
-        def _style_t1(df):
-            sty = pd.DataFrame("", index=df.index, columns=df.columns)
-            if _atm_t1 in df.columns: sty.loc[:, _atm_t1] = "background-color:rgba(250,204,21,0.14);border:2px solid #fbbf24;"
-            if "TOTAL" in df.columns: sty["TOTAL"] = "background-color:rgba(148,163,184,0.10);font-weight:bold;border-left:2px solid #475569;"
-            if _rPG and _rPG in df.index:
-                if len(_pg_top)>=1: sty.loc[_rPG, _pg_top[0]] = "background-color:rgba(34,197,94,0.70);color:white;font-weight:bold;"
-                if len(_pg_top)>=2: sty.loc[_rPG, _pg_top[1]] = "background-color:rgba(34,197,94,0.35);color:white;"
-            if _rCG and _rCG in df.index:
-                if len(_cg_bot)>=1: sty.loc[_rCG, _cg_bot[0]] = "background-color:rgba(239,68,68,0.70);color:white;font-weight:bold;"
-                if len(_cg_bot)>=2: sty.loc[_rCG, _cg_bot[1]] = "background-color:rgba(239,68,68,0.35);color:white;"
-            if _rNG and _rNG in df.index:
-                if len(_ng_top)>=1: sty.loc[_rNG, _ng_top[0]] = "background-color:rgba(16,185,129,0.70);color:white;font-weight:bold;"
-                if len(_ng_top)>=2: sty.loc[_rNG, _ng_top[1]] = "background-color:rgba(16,185,129,0.35);color:white;"
-                if len(_ng_bot)>=1: sty.loc[_rNG, _ng_bot[0]] = "background-color:rgba(139,92,246,0.70);color:white;font-weight:bold;"
-                if len(_ng_bot)>=2: sty.loc[_rNG, _ng_bot[1]] = "background-color:rgba(139,92,246,0.35);color:white;"
-            if _rCO and _rCO in df.index:
-                if len(_co_top)>=1: sty.loc[_rCO, _co_top[0]] = "background-color:rgba(245,158,11,0.70);color:white;font-weight:bold;"
-                if len(_co_top)>=2: sty.loc[_rCO, _co_top[1]] = "background-color:rgba(245,158,11,0.35);color:white;"
-            if _rPO and _rPO in df.index:
-                if len(_po_top)>=1: sty.loc[_rPO, _po_top[0]] = "background-color:rgba(6,182,212,0.70);color:white;font-weight:bold;"
-                if len(_po_top)>=2: sty.loc[_rPO, _po_top[1]] = "background-color:rgba(6,182,212,0.35);color:white;"
-            if _rCI in df.index:
-                if len(_ci_top)>=1: sty.loc[_rCI, _ci_top[0]] = "background-color:rgba(249,115,22,0.70);color:white;font-weight:bold;"
-                if len(_ci_top)>=2: sty.loc[_rCI, _ci_top[1]] = "background-color:rgba(249,115,22,0.35);color:white;"
-            if _rPI in df.index:
-                if len(_pi_top)>=1: sty.loc[_rPI, _pi_top[0]] = "background-color:rgba(249,115,22,0.70);color:white;font-weight:bold;"
-                if len(_pi_top)>=2: sty.loc[_rPI, _pi_top[1]] = "background-color:rgba(249,115,22,0.35);color:white;"
-            if _rPR in df.index:
-                if len(_pr_hi)>=1: sty.loc[_rPR, _pr_hi[0]] = "background-color:rgba(239,68,68,0.65);color:white;font-weight:bold;"
-                if len(_pr_hi)>=2: sty.loc[_rPR, _pr_hi[1]] = "background-color:rgba(239,68,68,0.30);color:white;"
-                if len(_pr_lo)>=1: sty.loc[_rPR, _pr_lo[0]] = "background-color:rgba(34,197,94,0.65);color:white;font-weight:bold;"
-                if len(_pr_lo)>=2: sty.loc[_rPR, _pr_lo[1]] = "background-color:rgba(34,197,94,0.30);color:white;"
-            if _rPD in df.index:
-                for _col in _strikes_t1:
-                    try:
-                        _pv = float(_dm_num_t1.loc[_rPD, _col])
-                        if -0.30 <= _pv <= 0:
-                            _intensity = abs(_pv)/0.30
-                            _alpha = round(0.20 + _intensity*0.50, 2)
-                            sty.loc[_rPD, _col] = f"background-color:rgba(34,197,94,{_alpha});color:white;" + ("font-weight:bold;" if _intensity>0.65 else "")
-                    except: pass
-            if _rHG in df.index:
-                for _col in _strikes_t1:
-                    try:
-                        if not pd.isna(_dm_num_t1.loc[_rHG, _col]):
-                            sty.loc[_rHG, _col] = "background-color:rgba(20,184,166,0.22);color:#99f6e4;font-weight:bold;"
-                    except: pass
-            return sty
-
-        st.dataframe(
-            _dm_fmt_t1.style.apply(_style_t1, axis=None),
-            use_container_width=True,
-            height=min(620, 38 * (len(_dm_fmt_t1) + 2)),
-        )
-        st.markdown("""
-<div style="font-size:11px;color:#64748b;padding:4px 0 8px 0;">
-🟡 ATM col · 🟢 Put GEX/OI top-2 · 🔴 Call GEX/OI top-2 · 🟩 Net GEX+ · 🟣 Net GEX− · 🟠 IV hottest ·
-Put Δ green gradient (−0.30 to 0 = safe OTM zone) · Teal = δ-hedge shares to buy · Prob row: 🔴 high breach / 🟢 strong floor
-</div>
-""", unsafe_allow_html=True)
-
-        st.markdown("---")
+            
         st.markdown("### 📝 GEX Interpretation Guide for Equity")
         st.markdown(f"""
 **{symbol}** GEX Analysis — Understanding Dealer Positioning
 
 **Net GEX: {fmt_number(net_gex)}**  
-{"🟢 **Positive GEX** — Market makers are net long gamma. They buy on dips and sell on rallies, creating a stabilising effect. Price tends to mean-revert between the Call Wall and Put Wall." if net_gex > 0 else "🔴 **Negative GEX** — Market makers are net short gamma. They chase moves — selling on dips and buying on rallies, which AMPLIFIES price moves. Breakouts are more likely to sustain."}
+{'🟢 **Positive GEX** — Market makers are net long gamma. They buy on dips and sell on rallies, creating a stabilising effect. Price tends to mean-revert between the Call Wall and Put Wall.' if net_gex > 0 else '🔴 **Negative GEX** — Market makers are net short gamma. They chase moves — selling on dips and buying on rallies, which AMPLIFIES price moves. Breakouts are more likely to sustain.'}
 
 **Key Wall Mechanics:**
-- **Call OI Wall (₹{call_wall:,.0f})** — volume concentration ceiling · **Call GEX Resistance (₹{call_gex_wall:,.0f})** — dealer gamma ceiling
-- **Put OI Wall (₹{put_wall:,.0f})** — volume concentration floor · **Put GEX Support (₹{put_gex_wall:,.0f})** — dealer gamma floor
-- **Gamma Flip (₹{gamma_flip:,.0f})**: regime boundary — above = stable, below = amplified moves
-- **Max Pain (₹{max_pain:,.0f})**: gravitational pull near expiry · DTE: {dte} days · ATM Straddle: ₹{atm_straddle:.1f}
+- **Call OI Wall (₹{call_wall:,.0f})**: Maximum call open interest — where call writers have the most skin in the game. Dealers short calls here must sell into rallies, capping upside.
+- **Put OI Wall (₹{put_wall:,.0f})**: Maximum put open interest — where put writers have maximum exposure. Dealers short puts here must buy on dips, creating a floor.
+- **Gamma Flip (₹{gamma_flip:,.0f})**: The regime boundary. Above = dealers stabilise, Below = dealers amplify moves.
+- **Max Pain (₹{max_pain:,.0f})**: Strike where total option buyer losses are maximum. Strong gravitational pull near expiry (DTE: {dte} days).
+- **ATM Straddle Cost: ₹{atm_straddle:.1f}** — Market implies this is the expected daily/weekly move range.
 """)
+
     # ── TAB 2: IV Skew ────────────────────────────────────────────────────────
     with tab2:
         st.subheader(f"Implied Volatility Skew — {symbol}")
@@ -1000,7 +826,25 @@ Spot is **{'ABOVE' if spot_price > gamma_flip else 'BELOW'}** the flip point.
         st.subheader(f"Strike-by-Strike Positioning Matrix — {symbol}")
 
         dm_fmt, dm_num = build_equity_matrix(gex_df, spot_price, gamma_levels, si)
-
+        # ── CONVERT GEX ROWS FROM LAKHS (L) TO CRORES (Cr) ────────────────────
+        gex_target_rows = [idx for idx in dm_num.index if any(p in str(idx) for p in ["Call GEX", "Put GEX", "Net GEX"])]
+        
+        for idx in gex_target_rows:
+            new_idx = str(idx).replace("(L)", "(Cr)")
+            
+            # 1. Update the numeric dataframe (dividing raw values by 100)
+            dm_num.loc[idx] = pd.to_numeric(dm_num.loc[idx], errors='coerce') / 100.0
+            dm_num = dm_num.rename(index={idx: new_idx})
+            
+            # 2. Re-format the display grid strings to match 2 decimal places
+            for col in dm_fmt.columns:
+                try:
+                    clean_string_val = str(dm_fmt.loc[idx, col]).replace(",", "")
+                    dm_fmt.loc[idx, col] = f"{float(clean_string_val) / 100.0:,.2f}"
+                except ValueError:
+                    pass
+            dm_fmt = dm_fmt.rename(index={idx: new_idx})
+        # ──────────────────────────────────────────────────────────────────────
         atm_strike   = int(get_atm_strike(spot_price, si))
         strikes_only = dm_fmt.columns.drop("TOTAL") if "TOTAL" in dm_fmt.columns else dm_fmt.columns
 
@@ -1022,7 +866,7 @@ Spot is **{'ABOVE' if spot_price > gamma_flip else 'BELOW'}** the flip point.
         row_call_delta = "Call Δ"
         row_put_delta  = "Put Δ"
         row_prob     = "Put Δ Prob% ↓ expiry"
-        row_hedge    = "Shares to Buy (Δ hedge)"
+        row_hedge    = "Shares (Δ hedge)"
 
         # ── inject hedge shares row into both dm_fmt and dm_num ──────────────
         # Formula: lot_size × call_delta, rounded to nearest integer.
@@ -1206,7 +1050,7 @@ Spot is **{'ABOVE' if spot_price > gamma_flip else 'BELOW'}** the flip point.
                         if not pd.isna(hv):
                             styles.loc[row_hedge, col] = (
                                 "background-color:rgba(20,184,166,0.22);"
-                                "color:#99f6e4;font-weight:bold;"
+                                "color:#011713;font-weight:bold;"
                             )
                     except (TypeError, ValueError, KeyError):
                         continue
@@ -1224,13 +1068,13 @@ Spot is **{'ABOVE' if spot_price > gamma_flip else 'BELOW'}** the flip point.
 <div style="font-size:12px;color:#9ca3af;padding:6px 0 2px 0;line-height:2.2;">
 <b>Highlight Legend</b> &nbsp;|&nbsp;
 <span style="background:rgba(34,197,94,0.70);color:white;padding:1px 7px;border-radius:3px;">🟢 Put GEX Top-2</span>&nbsp;
-<span style="background:rgba(239,68,68,0.70);color:white;padding:1px 7px;border-radius:3px;">🔴 Call GEX Bot-2 (most –ve)</span>&nbsp;
+<span style="background:rgba(239,68,68,0.70);color:white;padding:1px 7px;border-radius:3px;">🔴 Call GEX Top-2 (most –ve)</span>&nbsp;
 <span style="background:rgba(16,185,129,0.70);color:white;padding:1px 7px;border-radius:3px;">🟩 Net GEX Top-2</span>&nbsp;
-<span style="background:rgba(139,92,246,0.70);color:white;padding:1px 7px;border-radius:3px;">🟣 Net GEX Bot-2</span>&nbsp;
+<span style="background:rgba(139,92,246,0.70);color:white;padding:1px 7px;border-radius:3px;">🟣 Net GEX Top-2</span>&nbsp;
 <span style="background:rgba(245,158,11,0.70);color:white;padding:1px 7px;border-radius:3px;">🟡 Call OI Top-2</span>&nbsp;
 <span style="background:rgba(6,182,212,0.70);color:white;padding:1px 7px;border-radius:3px;">🔵 Put OI Top-2</span>&nbsp;
 <span style="background:rgba(249,115,22,0.70);color:white;padding:1px 7px;border-radius:3px;">🟠 IV Hottest Top-2</span>&nbsp;
-<span style="background:rgba(250,204,21,0.25);color:white;border:2px solid #fbbf24;padding:1px 7px;border-radius:3px;">🟡 ATM Strike</span>
+<span style="background:rgba(250,204,21,0.25);color:black;border:2px solid #fbbf24;padding:1px 7px;border-radius:3px;">🟡 ATM Strike</span>
 <br>
 <b>Put Δ row</b> &nbsp;|&nbsp;
 <span style="background:rgba(34,197,94,0.20);color:white;padding:1px 7px;border-radius:3px;">Light green: −0.01 to −0.10 (deep OTM)</span>&nbsp;
@@ -1243,7 +1087,7 @@ Spot is **{'ABOVE' if spot_price > gamma_flip else 'BELOW'}** the flip point.
 <span style="background:rgba(34,197,94,0.65);color:white;padding:1px 7px;border-radius:3px;">🟢 Low prob &lt;15% — deep OTM floor, unlikely to touch</span>
 <br>
 <b>Shares to Buy (Δ hedge) row</b> &nbsp;|&nbsp;
-<span style="background:rgba(20,184,166,0.22);color:#99f6e4;padding:1px 7px;border-radius:3px;">Teal — shares call seller must hold per lot to be delta-neutral</span>
+<span style="background:rgba(20,184,166,0.22);color:#011713;padding:1px 7px;border-radius:3px;">Teal — shares call seller must hold per lot to be delta-neutral</span>
 <br>
 <span style="color:#6b7280;">Darker shade = #1 rank · Lighter shade = #2 rank &nbsp;·&nbsp;
 GEX in Cr (peak ≥ ₹1Cr) or L otherwise</span>
