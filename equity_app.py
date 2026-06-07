@@ -602,14 +602,14 @@ if st.session_state.eq_data_loaded and st.session_state.eq_gex_df is not None:
     # ── Tabs ──────────────────────────────────────────────────────────────────
     st.markdown("---")
     tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
-        "📊 GEX Profile",
-        "📐 IV Skew",
-        "📋 OI & Volume",
-        "⚡ GEX / ₹1 Move",
-        "🎯 Pin Risk",
-        "🔬 Matrix",
-        "📊 Greeks",
-        "🔍 Scanner",
+        "📊GEX Profile",
+        "🔬Matrix",
+        "📋OI & Volume",
+        "⚡GEX / ₹1 Move",
+        "🎯Pin Risk",
+        "📐IV Skew",
+        "📊Greeks",
+        "🔍Scanner",
     ])
 
     # ── TAB 1: GEX Profile ────────────────────────────────────────────────────
@@ -650,8 +650,8 @@ if st.session_state.eq_data_loaded and st.session_state.eq_gex_df is not None:
 - **ATM Straddle Cost: ₹{atm_straddle:.1f}** — Market implies this is the expected daily/weekly move range.
 """)
 
-    # ── TAB 2: IV Skew ────────────────────────────────────────────────────────
-    with tab2:
+    # ── TAB 6: IV Skew ────────────────────────────────────────────────────────
+    with tab6:
         st.subheader(f"Implied Volatility Skew — {symbol}")
 
         st.plotly_chart(
@@ -821,8 +821,8 @@ Spot is **{'ABOVE' if spot_price > gamma_flip else 'BELOW'}** the flip point.
 - Always pair with stop loss 1 strike interval away from entry
 """)
 
-    # ── TAB 6: Positioning Matrix ─────────────────────────────────────────────
-    with tab6:
+    # ── TAB 2: Positioning Matrix ─────────────────────────────────────────────
+    with tab2:
         st.subheader(f"Strike-by-Strike Positioning Matrix — {symbol}")
 
         dm_fmt, dm_num = build_equity_matrix(gex_df, spot_price, gamma_levels, si)
