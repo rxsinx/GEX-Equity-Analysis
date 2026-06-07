@@ -650,8 +650,8 @@ def plot_gex_oi_clustered(df_chain, selected_stock, lower_bound, upper_bound):
     # Initialize dual Y-axis canvas
     fig = make_subplots(specs=[[{"secondary_y": True}]])
     
-    # ------------------ LEFT SIDE COLUMNS: GEX (Primary Y-Axis) ------------------
-    # Call GEX Column
+    # ------------------ COLUMNS: GEX (Primary Y-Axis) ------------------
+    # Call GEX Column (Left half of strike cluster via offsetgroup)
     fig.add_trace(
         go.Bar(
             x=df_filtered['Strike'],
@@ -663,46 +663,48 @@ def plot_gex_oi_clustered(df_chain, selected_stock, lower_bound, upper_bound):
         secondary_y=False
     )
     
-    # Put GEX Column
+    # Put GEX Column (Right half of strike cluster via offsetgroup)
     fig.add_trace(
         go.Bar(
             x=df_filtered['Strike'],
             y=df_filtered['Put_GEX_Cr'],
             name='Put GEX (Cr)',
             marker_color='#22c55e',  # Green
-            offsetgroup=1            # Shares group 1 to sit on the left side
+            offsetgroup=2
         ),
         secondary_y=False
     )
     
-    # ------------------ RIGHT SIDE COLUMNS: OI (Secondary Y-Axis) ------------------
-    # Call OI Column
+    # ------------------ LINES: Open Interest (Secondary Y-Axis) ------------------
+    # Call OI Line (Dotted Amber/Orange Line overlay)
     fig.add_trace(
-        go.Bar(
+        go.Scatter(
             x=df_filtered['Strike'],
             y=df_filtered['Call_OI_Lakhs'],
             name='Call OI (Lakhs)',
-            marker_color='#f59e0b',  # Amber/Orange
-            offsetgroup=2            # Shifts to the right side of the strike tick
+            mode='lines+markers',
+            line=dict(color='#f59e0b', width=2.5, dash='dot'),
+            marker=dict(size=6)
         ),
         secondary_y=True
     )
     
-    # Put OI Column
+    # Put OI Line (Solid Blue Line overlay)
     fig.add_trace(
-        go.Bar(
+        go.Scatter(
             x=df_filtered['Strike'],
             y=df_filtered['Put_OI_Lakhs'],
             name='Put OI (Lakhs)',
-            marker_color='#3b82f6',  # Blue
-            offsetgroup=2            # Clusters right next to Call OI
+            mode='lines+markers',
+            line=dict(color='#3b82f6', width=2.5),
+            marker=dict(size=6)
         ),
         secondary_y=True
     )
     
     # ------------------ LAYOUT CONFIGURATION ------------------
     fig.update_layout(
-        title_text=f"Call/Put GEX vs Open Interest Clustered Chart — {selected_stock}",
+        title_text=f"Call/Put GEX Bars with OI Lines Overlay — {selected_stock}",
         barmode='group',
         xaxis_title="Strike Price (₹)",
         hovermode="x unified",
