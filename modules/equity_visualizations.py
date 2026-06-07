@@ -609,27 +609,6 @@ def build_equity_matrix(
     oi_unit  = "L" if total_call_oi > 1e5 else ""
     oi_div   = 1e5 if total_call_oi > 1e5 else 1
 
-    # ── Put Δ probability row ────────────────────────────────────────────────
-    # Put delta is negative (0 to -1). abs(put_delta) × 100 = market-implied
-    # probability that the stock closes BELOW that strike at expiry.
-    # e.g. put_delta = -0.28  →  28% chance of expiring below this strike.
-    # Lower probability = price very unlikely to breach that level = strong OTM floor.
-    put_prob = (matrix["put_delta"].abs() * 100).round(1)
-
-    def _prob_label(p: float) -> str:
-        if p >= 60:
-            return f"{p:.1f}%  ← ITM / very likely below"
-        elif p >= 45:
-            return f"{p:.1f}%  ← near ATM"
-        elif p >= 30:
-            return f"{p:.1f}%  ← moderate, possible"
-        elif p >= 15:
-            return f"{p:.1f}%  ← low, unlikely below"
-        else:
-            return f"{p:.1f}%  ← very low, strong OTM floor"
-
-    _PROB_ROW = "Put Δ Prob% ↓ expiry"
-
     grid = {
         "Strike Price":           matrix["strike"].tolist(),
         f"Call GEX ({gex_unit})": (matrix["call_gex"] / div_gex).tolist(),
@@ -644,7 +623,7 @@ def build_equity_matrix(
         "Put LTP":                matrix["put_ltp"].tolist(),
         "Call Δ":                 matrix["call_delta"].tolist(),
         "Put Δ":                  matrix["put_delta"].tolist(),
-        _PROB_ROW:                put_prob.tolist(),   # raw floats for ranking
+        
     }
 
     dm = pd.DataFrame(grid).set_index("Strike Price").T
@@ -659,7 +638,7 @@ def build_equity_matrix(
         pd.NA, pd.NA,                         # Call IV%, Put IV%
         pd.NA, pd.NA,                         # Call LTP, Put LTP
         pd.NA, pd.NA,                         # Call Δ, Put Δ
-        pd.NA,                                # Put Δ Prob% — no chain total
+        
     ]
     dm["TOTAL"] = totals
 
