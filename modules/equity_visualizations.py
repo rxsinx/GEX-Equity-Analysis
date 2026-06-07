@@ -685,7 +685,7 @@ def plot_gex_oi_clustered(df_chain, selected_stock, spot_price, lower_bound, upp
             y=df_filtered['Call_OI_Lacs'],
             name='Call OI (Lacs)',
             mode='lines',
-            line=dict(color='#f59e0b', width=2, dash='dot')
+            line=dict(color='#1c1b19', width=2, dash='dot')
             
         ),
         secondary_y=True
