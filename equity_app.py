@@ -834,13 +834,6 @@ Spot is **{'ABOVE' if spot_price > gamma_flip else 'BELOW'}** the flip point.
         chart_df['Put_OI_Lacs'] = chart_df['put_oi'] / 1e5
     
         
-        # 2. Calculate the Call OI / Put OI Crossover Strike
-        # Find the strike where the absolute difference between Call OI and Put OI is minimized
-        if not chart_df.empty:
-            idx_min = (chart_df['Call_OI_Lacs'] - chart_df['Put_OI_Lacs']).abs().idxmin()
-            oi_cross_price = float(chart_df.loc[idx_min, 'Strike'])
-        else:
-            oi_cross_price = None
         # 2. Render the new clustered Call/Put GEX and OI chart at the top of Tab 2            
         fig_oi_clustered = plot_gex_oi_clustered(
             df_chain=chart_df,
