@@ -645,36 +645,15 @@ from plotly.subplots import make_subplots
 
 def plot_gex_oi_clustered(df_chain, selected_stock, spot_price, lower_bound, upper_bound, oi_cross_price=None):
     # Filter data around the spot price for clean visualization
-    df_filtered = df_chain[(df_chain['Strike'] >= lower_bound) & (df_chain['Strike'] <= upper_bound)]
+    df_filtered = df_chain[(df_chain['Strike'] >= lower_bound) & (df_chain['Strike'] <= upper_bound)].sort_values('Strike').copy()
 
     if df_filtered.empty:
         return make_subplots()
-        
-    # 1. NEW LOGIC: Compute precise X and Y coordinates for the dominant pillar tags
-    plus_x = []
-    plus_y = []
-    plus_text = []
-    plus_position = []  # Dynamic positioning array to clear the column tips
-
-    for s, c, p in zip(df_filtered['Strike'], df_filtered['Call_GEX_Cr'], df_filtered['Put_GEX_Cr']):
-        abs_c, abs_p = abs(c), abs(p)
-        if abs_c > abs_p:
-            plus_x.append(s)
-            plus_y.append(c)  # Track the exact top/bottom of the Call bar
-            plus_text.append('+')
-            # If Call GEX is negative (pointing down), place text below the tip
-            plus_position.append('bottom center' if c < 0 else 'top center')
-        elif abs_p > abs_c:
-            plus_x.append(s)
-            plus_y.append(p)  # Track the exact top/bottom of the Put bar
-            plus_text.append('+')
-            # If Put GEX is negative, place text below the tip
-            plus_position.append('bottom center' if p < 0 else 'top center')
 
     # Initialize dual Y-axis canvas
     fig = make_subplots(specs=[[{"secondary_y": True}]])
 
-    # 2. Add Continuous Sentiment Background Shading
+    # 1. Add Continuous Sentiment Background Shading
     strikes = df_filtered['Strike'].tolist()
     n = len(strikes)
     if n > 0:
@@ -698,9 +677,9 @@ def plot_gex_oi_clustered(df_chain, selected_stock, spot_price, lower_bound, upp
             put_oi = df_filtered.iloc[i]['Put_OI_Lacs']
             
             if call_oi > put_oi:
-                bg_color = "rgba(239, 68, 68, 0.07)"  
+                bg_color = "rgba(239, 68, 68, 0.06)"  # Soft Bearish Red
             elif call_oi < put_oi:
-                bg_color = "rgba(34, 197, 94, 0.07)"  
+                bg_color = "rgba(34, 197, 94, 0.06)"  # Soft Bullish Green
             else:
                 bg_color = "rgba(0,0,0,0)"
                 
@@ -732,18 +711,30 @@ def plot_gex_oi_clustered(df_chain, selected_stock, spot_price, lower_bound, upp
         opacity=0.75
     ), secondary_y=False)
 
-    # ------------------ FIX TRACE: Add + tags directly over pillars ------------------
-    fig.add_trace(go.Scatter(
-        x=plus_x,
-        y=plus_y,
-        mode='text',
-        text=plus_text,
-        textposition=plus_position,  # <--- Applied dynamic positions array
-        textfont=dict(size=18, color='white', family="Arial Black"),
-        cliponaxis=False,            # <--- Prevents chart edges from cutting off tags
-        showlegend=False,
-        hoverinfo='skip'
-    ), secondary_y=False)
+    # ------------------ FIXED LOGIC: Absolute-coordinate Layout Annotations ------------------
+    for s, c, p in zip(df_filtered['Strike'], df_filtered['Call_GEX_Cr'], df_filtered['Put_GEX_Cr']):
+        abs_c, abs_p = abs(c), abs(p)
+        if abs_c == 0 and abs_p == 0:
+            continue
+            
+        # Determine the dominant GEX value and whether it is positive or negative
+        if abs_c > abs_p:
+            target_y = c
+            yshift = -10 if c < 0 else 10
+        else:
+            target_y = p
+            yshift = -10 if p < 0 else 10
+            
+        fig.add_annotation(
+            x=s,
+            y=target_y,
+            text="<b>+</b>",
+            showarrow=False,
+            font=dict(size=16, color='white', family="Arial Black"),
+            yshift=yshift,
+            xref="x",
+            yref="y"  # Forces alignment to primary Y-axis (GEX Cr) data space
+        )
 
     # ------------------ LINES: Open Interest (Secondary Y-Axis) ------------------
     fig.add_trace(go.Scatter(
@@ -751,7 +742,7 @@ def plot_gex_oi_clustered(df_chain, selected_stock, spot_price, lower_bound, upp
         y=df_filtered['Call_OI_Lacs'], 
         name='Call OI (Lacs)', 
         mode='lines', 
-        line=dict(color='#f59e0b', width=1.5, dash='dot')  # Shifted from dark grey to amber for visibility
+        line=dict(color='#f59e0b', width=2, dash='dot')  # High visibility Amber
     ), secondary_y=True)
     
     fig.add_trace(go.Scatter(
@@ -759,7 +750,7 @@ def plot_gex_oi_clustered(df_chain, selected_stock, spot_price, lower_bound, upp
         y=df_filtered['Put_OI_Lacs'], 
         name='Put OI (Lacs)', 
         mode='lines', 
-        line=dict(color='#3b82f6', width=1.5)
+        line=dict(color='#3b82f6', width=2)
     ), secondary_y=True)
 
     # ------------------ SPOT PRICE LINE ------------------
