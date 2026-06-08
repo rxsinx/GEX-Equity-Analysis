@@ -847,7 +847,8 @@ Spot is **{'ABOVE' if spot_price > gamma_flip else 'BELOW'}** the flip point.
             selected_stock=symbol,
             spot_price=spot_price,  # <--- ADD THIS LINE HERE
             lower_bound=spot_price * (1 - st.session_state.eq_strike_range_pct / 100),
-            upper_bound=spot_price * (1 + st.session_state.eq_strike_range_pct / 100)
+            upper_bound=spot_price * (1 + st.session_state.eq_strike_range_pct / 100),
+            oi_cross_price=oi_cross_price
         )
         st.plotly_chart(fig_oi_clustered, use_container_width=True)
     
