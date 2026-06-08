@@ -741,9 +741,9 @@ def plot_gex_oi_clustered(df_chain, selected_stock, spot_price, lower_bound, upp
         x=df_filtered['Strike'], 
         y=df_filtered['Call_OI_Lacs'], 
         name='Call OI (Lacs)', 
-        mode='lines+markers', 
-        line=dict(color='#1c1b19', width=1.5, dash='dot'),
-        marker=dict(size=4)
+        mode='lines', 
+        line=dict(color='#1c1b19', width=1.5, dash='dot')
+        
     ), secondary_y=True)
     
     # Put OI Line (Vibrant Blue)
@@ -751,9 +751,9 @@ def plot_gex_oi_clustered(df_chain, selected_stock, spot_price, lower_bound, upp
         x=df_filtered['Strike'], 
         y=df_filtered['Put_OI_Lacs'], 
         name='Put OI (Lacs)', 
-        mode='lines+markers', 
-        line=dict(color='#3b82f6', width=1.5),
-        marker=dict(size=4)
+        mode='lines', 
+        line=dict(color='#3b82f6', width=1.5)
+        
     ), secondary_y=True)
 
     # ------------------ SPOT PRICE LINE ------------------
