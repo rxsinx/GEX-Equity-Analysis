@@ -705,13 +705,33 @@ def plot_gex_oi_clustered(df_chain, selected_stock, spot_price, lower_bound, upp
     )
 
     # ------------------ SPOT PRICE LINE ------------------
-    fig.add_vline(
-        x=spot_price,
-        line=dict(color='#151617', width=1, dash='dash'), # Blue dashed line
-        annotation_text=f"  Spot: ₹{spot_price:,.0f}",
-        annotation_position="top right",
-        annotation_font=dict(size=10, color='#60a5fa')
-    )
+    #fig.add_vline(
+    #    x=spot_price,
+    #    line=dict(color='#151617', width=1, dash='dash'), # Blue dashed line
+    #    annotation_text=f"  Spot: ₹{spot_price:,.0f}",
+    #    annotation_position="top right",
+    #    annotation_font=dict(size=10, color='#60a5fa')
+    #)
+    # Existing Spot Price Line
+    if spot_price:
+        fig.add_vline(
+            x=spot_price, 
+            line_dash="dash", 
+            line_color="black", 
+            annotation_text=f"Spot: {spot_price}", 
+            annotation_position="top"
+        )
+
+    # NEW: OI Crossover Line
+    if oi_cross_price:
+        fig.add_vline(
+            x=oi_cross_price, 
+            line_dash="dot", 
+            line_color="purple",  # Distinct color for the crossover
+            line_width=2,
+            annotation_text=f"OI Cross: {oi_cross_price}", 
+            annotation_position="bottom"
+        )
     
     # ------------------ LAYOUT CONFIGURATION ------------------
     fig.update_layout(
