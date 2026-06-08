@@ -654,17 +654,22 @@ def plot_gex_oi_clustered(df_chain, selected_stock, spot_price, lower_bound, upp
     plus_x = []
     plus_y = []
     plus_text = []
+    plus_position = []  # Dynamic positioning array to clear the column tips
 
     for s, c, p in zip(df_filtered['Strike'], df_filtered['Call_GEX_Cr'], df_filtered['Put_GEX_Cr']):
         abs_c, abs_p = abs(c), abs(p)
         if abs_c > abs_p:
             plus_x.append(s)
-            plus_y.append(c)  # Track the exact top of the Call bar
+            plus_y.append(c)  # Track the exact top/bottom of the Call bar
             plus_text.append('+')
+            # If Call GEX is negative (pointing down), place text below the tip
+            plus_position.append('bottom center' if c < 0 else 'top center')
         elif abs_p > abs_c:
             plus_x.append(s)
-            plus_y.append(p)  # Track the exact top of the Put bar
+            plus_y.append(p)  # Track the exact top/bottom of the Put bar
             plus_text.append('+')
+            # If Put GEX is negative, place text below the tip
+            plus_position.append('bottom center' if p < 0 else 'top center')
 
     # Initialize dual Y-axis canvas
     fig = make_subplots(specs=[[{"secondary_y": True}]])
@@ -709,7 +714,7 @@ def plot_gex_oi_clustered(df_chain, selected_stock, spot_price, lower_bound, upp
                 )
                 
     # ------------------ COLUMNS: GEX (Primary Y-Axis) ------------------
-    # Call GEX Column (Cleaned of buggy text keys)
+    # Call GEX Column 
     fig.add_trace(go.Bar(
         x=df_filtered['Strike'], 
         y=df_filtered['Call_GEX_Cr'], 
@@ -718,7 +723,7 @@ def plot_gex_oi_clustered(df_chain, selected_stock, spot_price, lower_bound, upp
         opacity=0.75
     ), secondary_y=False)
 
-    # Put GEX Column (Cleaned of buggy text keys)
+    # Put GEX Column
     fig.add_trace(go.Bar(
         x=df_filtered['Strike'], 
         y=df_filtered['Put_GEX_Cr'], 
@@ -733,8 +738,9 @@ def plot_gex_oi_clustered(df_chain, selected_stock, spot_price, lower_bound, upp
         y=plus_y,
         mode='text',
         text=plus_text,
-        textposition='top center',
+        textposition=plus_position,  # <--- Applied dynamic positions array
         textfont=dict(size=18, color='white', family="Arial Black"),
+        cliponaxis=False,            # <--- Prevents chart edges from cutting off tags
         showlegend=False,
         hoverinfo='skip'
     ), secondary_y=False)
