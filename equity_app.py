@@ -833,7 +833,17 @@ Spot is **{'ABOVE' if spot_price > gamma_flip else 'BELOW'}** the flip point.
         chart_df['Call_OI_Lacs'] = chart_df['call_oi'] / 1e5
         chart_df['Put_OI_Lacs'] = chart_df['put_oi'] / 1e5
     
-        
+        # ── NEW: Calculate the exact strike where Call OI crosses ABOVE Put OI ──
+         oi_cross_price = None
+         if not chart_df.empty:
+             # Ensure data is ordered from lowest to highest strike price
+             sorted_df = chart_df.sort_values('Strike')
+             # Mask where Call OI breaks out above Put OI
+             cross_mask = sorted_df['Call_OI_Lacs'] > sorted_df['Put_OI_Lacs']
+             crossover_candidates = sorted_df[cross_mask]
+             
+             if not crossover_candidates.empty:
+                 oi_cross_price = float(crossover_candidates['Strike'].iloc[0])
         # 2. Render the new clustered Call/Put GEX and OI chart at the top of Tab 2            
         fig_oi_clustered = plot_gex_oi_clustered(
             df_chain=chart_df,
