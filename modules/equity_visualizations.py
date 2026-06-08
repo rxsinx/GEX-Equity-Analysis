@@ -643,7 +643,7 @@ def build_equity_matrix(
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-def plot_gex_oi_clustered(df_chain, selected_stock, spot_price, lower_bound, upper_bound):
+def plot_gex_oi_clustered(df_chain, selected_stock, spot_price, lower_bound, upper_bound, oi_cross_price=None):
     # Filter data around the spot price for clean visualization
     df_filtered = df_chain[(df_chain['Strike'] >= lower_bound) & (df_chain['Strike'] <= upper_bound)]
     
