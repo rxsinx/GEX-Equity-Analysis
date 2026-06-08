@@ -1066,7 +1066,7 @@ Spot is **{'ABOVE' if spot_price > gamma_flip else 'BELOW'}** the flip point.
         st.dataframe(
             dm_fmt.style.apply(_style_eq_matrix, axis=None),
             use_container_width=True,
-            height=min(600, 38 * (len(dm_fmt) + 2)),
+            height=min(600, 38 * (len(dm_fmt) + 0)),
         )
 
         # ── Colour legend ─────────────────────────────────────────────────────
