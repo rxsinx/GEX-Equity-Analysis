@@ -650,29 +650,30 @@ def plot_gex_oi_clustered(df_chain, selected_stock, spot_price, lower_bound, upp
     if df_filtered.empty:
         return make_subplots()
         
-    # 2. Compute Dominant GEX Pillars (+ tags)
-    call_texts = []
-    put_texts = []
-    for c, p in zip(df_filtered['Call_GEX_Cr'], df_filtered['Put_GEX_Cr']):
-        if abs(c) > abs(p):
-            call_texts.append('+')
-            put_texts.append('')
-        elif abs(p) > abs(c):
-            call_texts.append('')
-            put_texts.append('+')
-        else:
-            call_texts.append('')
-            put_texts.append('')
-    
+    # 1. NEW LOGIC: Compute precise X and Y coordinates for the dominant pillar tags
+    plus_x = []
+    plus_y = []
+    plus_text = []
+
+    for s, c, p in zip(df_filtered['Strike'], df_filtered['Call_GEX_Cr'], df_filtered['Put_GEX_Cr']):
+        abs_c, abs_p = abs(c), abs(p)
+        if abs_c > abs_p:
+            plus_x.append(s)
+            plus_y.append(c)  # Track the exact top of the Call bar
+            plus_text.append('+')
+        elif abs_p > abs_c:
+            plus_x.append(s)
+            plus_y.append(p)  # Track the exact top of the Put bar
+            plus_text.append('+')
+
     # Initialize dual Y-axis canvas
     fig = make_subplots(specs=[[{"secondary_y": True}]])
 
-    # 3. Add Continuous Sentiment Background Shading
+    # 2. Add Continuous Sentiment Background Shading
     strikes = df_filtered['Strike'].tolist()
     n = len(strikes)
     if n > 0:
         for i in range(n):
-            # Calculate continuous midpoints between strikes to eliminate gaps
             if n == 1:
                 x0 = strikes[i] - 5
                 x1 = strikes[i] + 5
@@ -688,15 +689,13 @@ def plot_gex_oi_clustered(df_chain, selected_stock, spot_price, lower_bound, upp
                 x0 = (strikes[i-1] + strikes[i]) / 2.0
                 x1 = (strikes[i] + strikes[i+1]) / 2.0
             
-            # Read exact OI values for comparison
             call_oi = df_filtered.iloc[i]['Call_OI_Lacs']
             put_oi = df_filtered.iloc[i]['Put_OI_Lacs']
             
-            # Map sentiment colors
             if call_oi > put_oi:
-                bg_color = "rgba(239, 68, 68, 0.07)"  # Very soft Bearish Red
+                bg_color = "rgba(239, 68, 68, 0.07)"  
             elif call_oi < put_oi:
-                bg_color = "rgba(34, 197, 94, 0.07)"  # Very soft Bullish Green
+                bg_color = "rgba(34, 197, 94, 0.07)"  
             else:
                 bg_color = "rgba(0,0,0,0)"
                 
@@ -705,77 +704,77 @@ def plot_gex_oi_clustered(df_chain, selected_stock, spot_price, lower_bound, upp
                     x0=x0, x1=x1,
                     fillcolor=bg_color,
                     opacity=1,
-                    layer="below",  # Keeps chart grid lines fully visible
+                    layer="below",  
                     line_width=0
                 )
                 
     # ------------------ COLUMNS: GEX (Primary Y-Axis) ------------------
-    # Call GEX Column
+    # Call GEX Column (Cleaned of buggy text keys)
     fig.add_trace(go.Bar(
         x=df_filtered['Strike'], 
         y=df_filtered['Call_GEX_Cr'], 
         name='Call GEX (Cr)', 
         marker_color='#ef4444', 
-        opacity=0.75,
-        text=call_texts,
-        textposition='outside',
-        textfont=dict(size=15, color='white', family="Arial Black")
+        opacity=0.75
     ), secondary_y=False)
 
-    # Put GEX Column
+    # Put GEX Column (Cleaned of buggy text keys)
     fig.add_trace(go.Bar(
         x=df_filtered['Strike'], 
         y=df_filtered['Put_GEX_Cr'], 
         name='Put GEX (Cr)', 
         marker_color='#22c55e', 
-        opacity=0.75,
-        text=put_texts,
-        textposition='outside',
-        textfont=dict(size=15, color='white', family="Arial Black")
+        opacity=0.75
     ), secondary_y=False)
 
-    
+    # ------------------ FIX TRACE: Add + tags directly over pillars ------------------
+    fig.add_trace(go.Scatter(
+        x=plus_x,
+        y=plus_y,
+        mode='text',
+        text=plus_text,
+        textposition='top center',
+        textfont=dict(size=18, color='white', family="Arial Black"),
+        showlegend=False,
+        hoverinfo='skip'
+    ), secondary_y=False)
+
     # ------------------ LINES: Open Interest (Secondary Y-Axis) ------------------
-    # Call OI Line (Dotted Black - #1c1b19  Line overlay)
     fig.add_trace(go.Scatter(
         x=df_filtered['Strike'], 
         y=df_filtered['Call_OI_Lacs'], 
         name='Call OI (Lacs)', 
         mode='lines', 
-        line=dict(color='#1c1b19', width=1.5, dash='dot')
-        
+        line=dict(color='#f59e0b', width=1.5, dash='dot')  # Shifted from dark grey to amber for visibility
     ), secondary_y=True)
     
-    # Put OI Line (Vibrant Blue)
     fig.add_trace(go.Scatter(
         x=df_filtered['Strike'], 
         y=df_filtered['Put_OI_Lacs'], 
         name='Put OI (Lacs)', 
         mode='lines', 
         line=dict(color='#3b82f6', width=1.5)
-        
     ), secondary_y=True)
 
     # ------------------ SPOT PRICE LINE ------------------
     fig.add_vline(
-        x=spot_price,
-        line=dict(color='#151617', width=1, dash='dash'), # Blue dashed line
-        annotation_text=f"  Spot: ₹{spot_price:,.0f}",
-        annotation_position="top right",
+        x=spot_price, 
+        line=dict(color='#60a5fa', width=1.5, dash='dash'), 
+        annotation_text=f"  Spot: ₹{spot_price:,.2f}", 
+        annotation_position="top right", 
         annotation_font=dict(size=10, color='#60a5fa')
     )
        
-    
     # ------------------ LAYOUT CONFIGURATION ------------------
     fig.update_layout(
-        title_text=f"Call/Put GEX Bars with OI Lines — {selected_stock}",
-        barmode= 'overlay',
-        xaxis_title="Strike Price (₹)",
-        hovermode="x unified",
+        title_text=f"Call/Put GEX Matrix & OI Sentiment Zones — {selected_stock}", 
+        barmode='overlay', 
+        xaxis_title="Strike Price (₹)", 
+        hovermode="x unified", 
+        template="plotly_dark",
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
     )
     
-    # Axis titles
     fig.update_yaxes(title_text="<b>Gamma Exposure (Cr)</b>", secondary_y=False)
     fig.update_yaxes(title_text="<b>Open Interest (Lacs)</b>", secondary_y=True)
     
