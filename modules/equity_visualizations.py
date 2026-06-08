@@ -646,63 +646,115 @@ from plotly.subplots import make_subplots
 def plot_gex_oi_clustered(df_chain, selected_stock, spot_price, lower_bound, upper_bound, oi_cross_price=None):
     # Filter data around the spot price for clean visualization
     df_filtered = df_chain[(df_chain['Strike'] >= lower_bound) & (df_chain['Strike'] <= upper_bound)]
+
+    if df_filtered.empty:
+        return make_subplots()
+        
+    # 2. Compute Dominant GEX Pillars (+ tags)
+    call_texts = []
+    put_texts = []
+    for c, p in zip(df_filtered['Call_GEX_Cr'], df_filtered['Put_GEX_Cr']):
+        if abs(c) > abs(p):
+            call_texts.append('+')
+            put_texts.append('')
+        elif abs(p) > abs(c):
+            call_texts.append('')
+            put_texts.append('+')
+        else:
+            call_texts.append('')
+            put_texts.append('')
     
     # Initialize dual Y-axis canvas
     fig = make_subplots(specs=[[{"secondary_y": True}]])
 
-    
+    # 3. Add Continuous Sentiment Background Shading
+    strikes = df_filtered['Strike'].tolist()
+    n = len(strikes)
+    if n > 0:
+        for i in range(n):
+            # Calculate continuous midpoints between strikes to eliminate gaps
+            if n == 1:
+                x0 = strikes[i] - 5
+                x1 = strikes[i] + 5
+            elif i == 0:
+                half_diff = (strikes[1] - strikes[0]) / 2.0
+                x0 = strikes[0] - half_diff
+                x1 = strikes[0] + half_diff
+            elif i == n - 1:
+                half_diff = (strikes[n-1] - strikes[n-2]) / 2.0
+                x0 = strikes[n-1] - half_diff
+                x1 = strikes[n-1] + half_diff
+            else:
+                x0 = (strikes[i-1] + strikes[i]) / 2.0
+                x1 = (strikes[i] + strikes[i+1]) / 2.0
+            
+            # Read exact OI values for comparison
+            call_oi = df_filtered.iloc[i]['Call_OI_Lacs']
+            put_oi = df_filtered.iloc[i]['Put_OI_Lacs']
+            
+            # Map sentiment colors
+            if call_oi > put_oi:
+                bg_color = "rgba(239, 68, 68, 0.07)"  # Very soft Bearish Red
+            elif call_oi < put_oi:
+                bg_color = "rgba(34, 197, 94, 0.07)"  # Very soft Bullish Green
+            else:
+                bg_color = "rgba(0,0,0,0)"
+                
+            if bg_color != "rgba(0,0,0,0)":
+                fig.add_vrect(
+                    x0=x0, x1=x1,
+                    fillcolor=bg_color,
+                    opacity=1,
+                    layer="below",  # Keeps chart grid lines fully visible
+                    line_width=0
+                )
+                
     # ------------------ COLUMNS: GEX (Primary Y-Axis) ------------------
-    # Call GEX Column (Left half of strike cluster via offsetgroup)
-    fig.add_trace(
-        go.Bar(
-            x=df_filtered['Strike'],
-            y=df_filtered['Call_GEX_Cr'],
-            name='Call GEX (Cr)',
-            marker_color='#ef4444',  # Red
-            opacity=0.75
-        ),
-        secondary_y=False
-    )
-    
-    # Put GEX Column (Right half of strike cluster via offsetgroup)
-    fig.add_trace(
-        go.Bar(
-            x=df_filtered['Strike'],
-            y=df_filtered['Put_GEX_Cr'],
-            name='Put GEX (Cr)',
-            marker_color='#22c55e',  # Green
-            opacity=0.75
-        ),
-        secondary_y=False
-    )
+    # Call GEX Column
+    fig.add_trace(go.Bar(
+        x=df_filtered['Strike'], 
+        y=df_filtered['Call_GEX_Cr'], 
+        name='Call GEX (Cr)', 
+        marker_color='#ef4444', 
+        opacity=0.75,
+        text=call_texts,
+        textposition='outside',
+        textfont=dict(size=15, color='white', family="Arial Black")
+    ), secondary_y=False)
+
+    # Put GEX Column
+    fig.add_trace(go.Bar(
+        x=df_filtered['Strike'], 
+        y=df_filtered['Put_GEX_Cr'], 
+        name='Put GEX (Cr)', 
+        marker_color='#22c55e', 
+        opacity=0.75,
+        text=put_texts,
+        textposition='outside',
+        textfont=dict(size=15, color='white', family="Arial Black")
+    ), secondary_y=False)
 
     
     # ------------------ LINES: Open Interest (Secondary Y-Axis) ------------------
-    # Call OI Line (Dotted Amber/Orange Line overlay)
-    fig.add_trace(
-        go.Scatter(
-            x=df_filtered['Strike'],
-            y=df_filtered['Call_OI_Lacs'],
-            name='Call OI (Lacs)',
-            mode='lines',
-            line=dict(color='#1c1b19', width=2, dash='dot')
-            
-        ),
-        secondary_y=True
-    )
+    # Call OI Line (Dotted Black - #1c1b19  Line overlay)
+    fig.add_trace(go.Scatter(
+        x=df_filtered['Strike'], 
+        y=df_filtered['Call_OI_Lacs'], 
+        name='Call OI (Lacs)', 
+        mode='lines+markers', 
+        line=dict(color='#1c1b19', width=1.5, dash='dot'),
+        marker=dict(size=4)
+    ), secondary_y=True)
     
-    # Put OI Line (Solid Blue Line overlay)
-    fig.add_trace(
-        go.Scatter(
-            x=df_filtered['Strike'],
-            y=df_filtered['Put_OI_Lacs'],
-            name='Put OI (Lacs)',
-            mode='lines',
-            line=dict(color='#3b82f6', width=2)
-            
-        ),
-        secondary_y=True
-    )
+    # Put OI Line (Vibrant Blue)
+    fig.add_trace(go.Scatter(
+        x=df_filtered['Strike'], 
+        y=df_filtered['Put_OI_Lacs'], 
+        name='Put OI (Lacs)', 
+        mode='lines+markers', 
+        line=dict(color='#3b82f6', width=1.5),
+        marker=dict(size=4)
+    ), secondary_y=True)
 
     # ------------------ SPOT PRICE LINE ------------------
     fig.add_vline(
