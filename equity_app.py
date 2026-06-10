@@ -1174,7 +1174,7 @@ Scans the F&O universe and fetches ATM straddle cost, PCR, and OI for each stock
         with scan_col1:
             scan_preset = st.selectbox(
                 "Scan Universe",
-                ["NIFTY50 (50 stocks)", "POPULAR (20 stocks)", "Custom"],
+                ["NIFTY50 (50 stocks)", "NIFTY100", "POPULAR (20 stocks)", "Custom"],
                 key="eq_scan_preset",
             )
         with scan_col2:
