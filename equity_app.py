@@ -1180,7 +1180,7 @@ Scans the F&O universe and fetches ATM straddle cost, PCR, and OI for each stock
         with scan_col2:
             scan_expiry = st.selectbox(
                 "Expiry for scan",
-                get_equity_expiries(3),
+                options=get_equity_expiries(),  # <-- Make sure it calls your
                 key="eq_scan_expiry",
             )
 
