@@ -1193,6 +1193,10 @@ Scans the F&O universe and fetches ATM straddle cost, PCR, and OI for each stock
             scan_symbols = [s.strip().upper() for s in custom_scan.split(",") if s.strip()]
         elif scan_preset == "POPULAR (20 stocks)":
             scan_symbols = sorted(POPULAR_STOCKS)
+        
+        elif scan_preset == "NIFTY100":
+            scan_symbols = sorted(NIFTY100_STOCKS) # Added NIFTY100 handling
+        
         else:
             scan_symbols = sorted(NIFTY50_STOCKS)
 
