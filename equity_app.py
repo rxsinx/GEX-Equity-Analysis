@@ -7,7 +7,7 @@ F&O equities (monthly options only).
 KEY DIFFERENCES FROM INDEX GEX TERMINAL:
 ─────────────────────────────────────────────────────────────────────────
 1.  Symbol selector  : Stock picker with NIFTY50 / NIFTY100 / Custom presets
-2.  Expiry           : Monthly only (last Thursday) — no weekly for stocks
+2.  Expiry           : Monthly only (last Tuesday) — no weekly for stocks
 3.  GEX units        : Per-lot adjusted, expressed in ₹Cr or ₹L
 4.  GEX/₹1 view      : Dealer rehedge pressure per ₹1 stock move
 5.  Pin risk gauge   : Max Pain proximity score + DTE-weighted urgency
@@ -381,7 +381,7 @@ with st.sidebar:
 
     expiry = st.selectbox(
         "Expiry", expiries,
-        help="All stock options: Last Thursday of month",
+        help="All stock options: Last Tuesday of month",
         key="eq_expiry_sel",
     )
     st.session_state.eq_expiry = expiry
@@ -1295,7 +1295,7 @@ else:
          "1. Enter Kite API Key + Secret\n2. Click **Login to Kite** and authorise\n3. Paste the request token\n4. Select your stock from NIFTY50/NIFTY100\n5. Pick the monthly expiry\n6. Click **Fetch Chain**\n7. Click **🟢 GO LIVE**",
          "rgba(96,165,250,0.15)"),
         (col2, "📅 Equity vs Index Options",
-         "**Stock options:**\n- Monthly expiry only (last Thursday)\n- NFO exchange, NSE:SYMBOL spot\n- Lot sizes vary widely by stock\n- Strong put skew (insurance demand)\n- Max Pain pinning is stronger!\n\n**Index options:**\n- Weekly + Monthly\n- NFO/BFO exchange\n- Fixed lot sizes",
+         "**Stock options:**\n- Monthly expiry only (last Tuesday)\n- NFO exchange, NSE:SYMBOL spot\n- Lot sizes vary widely by stock\n- Strong put skew (insurance demand)\n- Max Pain pinning is stronger!\n\n**Index options:**\n- Weekly + Monthly\n- NFO/BFO exchange\n- Fixed lot sizes",
          "rgba(34,197,94,0.15)"),
         (col3, "💡 Key GEX Concepts",
          "**+GEX (Green):** Dealers long gamma → mean-reversion regime\n**-GEX (Red):** Dealers short gamma → trending/volatile regime\n**Call Wall:** Heavy call OI → resistance\n**Put Wall:** Heavy put OI → support\n**Max Pain:** Gravitational pull near expiry\n**Gamma Flip:** Regime boundary",
