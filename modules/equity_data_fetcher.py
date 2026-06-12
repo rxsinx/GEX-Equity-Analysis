@@ -7,7 +7,7 @@ KEY DIFFERENCES FROM INDEX GEX:
 ─────────────────────────────────────────────────────────────────────
 1.  Exchange   : Index options → NFO.  Equity options → NFO (same exchange,
                  but instrument name = stock symbol e.g. "RELIANCE")
-2.  Expiry     : All equity options are MONTHLY only (last Thursday of month).
+2.  Expiry     : All equity options are MONTHLY only (last Tuesday of month).
                  No weekly expiries for stocks.
 3.  Lot sizes  : Vary wildly per stock (e.g. RELIANCE=250, HDFC=550, TCS=150).
                  Fetched live from Kite instruments.
@@ -147,12 +147,12 @@ class EquityDataError(EquityKiteError):
     pass
 
 
-# ─── Expiry helpers (equity = last Thursday of month, monthly only) ─────────
+# ─── Expiry helpers (equity = last Tuesday of month, monthly only) ─────────
 
 def get_equity_expiries(num: int = 6, from_date: Optional[datetime] = None) -> list[str]:
     """
     Return upcoming NSE equity option expiry dates.
-    All equity options expire on the LAST THURSDAY of each calendar month.
+    All equity options expire on the LAST Tuesday of each calendar month.
     No weekly expiries exist for stocks.
     """
     today = from_date or datetime.now()
@@ -160,10 +160,10 @@ def get_equity_expiries(num: int = 6, from_date: Optional[datetime] = None) -> l
     yr, mo = today.year, today.month
 
     while len(result) < num:
-        # Last Thursday of yr/mo
+        # Last Tuesday of yr/mo
         last_day = calendar.monthrange(yr, mo)[1]
         candidate = datetime(yr, mo, last_day)
-        while candidate.weekday() != 3:  # 3 = Thursday
+        while candidate.weekday() != 1:  # 3 = Tuesday
             candidate -= timedelta(days=1)
 
         if candidate.date() > today.date():
