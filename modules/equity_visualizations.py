@@ -643,6 +643,33 @@ def build_equity_matrix(
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
+def _find_oi_crossovers(df):
+    """
+    Detect every point where the Call OI line crosses the Put OI line.
+    Uses linear interpolation between the two bracketing strikes so the
+    reported strike/OI value is the true intersection, not just the
+    nearest sampled strike.
+    Returns a list of (strike, oi_value_at_cross) tuples.
+    """
+    d = df.sort_values('Strike').reset_index(drop=True)
+    strikes = d['Strike'].values
+    call_oi = d['Call_OI_Lacs'].values
+    put_oi  = d['Put_OI_Lacs'].values
+    diff    = call_oi - put_oi
+
+    crossings = []
+    for i in range(len(diff) - 1):
+        d0, d1 = diff[i], diff[i + 1]
+        if d0 == 0:
+            crossings.append((float(strikes[i]), float(call_oi[i])))
+            continue
+        if d0 * d1 < 0:  # sign change → lines crossed between i and i+1
+            w = abs(d0) / (abs(d0) + abs(d1) + 1e-9)
+            cross_strike = strikes[i] + (strikes[i + 1] - strikes[i]) * w
+            cross_oi     = call_oi[i] + (call_oi[i + 1] - call_oi[i]) * w
+            crossings.append((float(cross_strike), float(cross_oi)))
+    return crossings
+
 def plot_gex_oi_clustered(df_chain, selected_stock, spot_price, lower_bound, upper_bound, oi_cross_price =None):
     # Filter data around the spot price for clean visualization
     df_filtered = df_chain[(df_chain['Strike'] >= lower_bound) & (df_chain['Strike'] <= upper_bound)]
@@ -704,6 +731,35 @@ def plot_gex_oi_clustered(df_chain, selected_stock, spot_price, lower_bound, upp
         secondary_y=True
     )
 
+    # ------------------ OI CROSSOVER MARKER(S) ------------------
+    crossovers = _find_oi_crossovers(df_filtered)
+    if crossovers:
+        nearest_strike = min(crossovers, key=lambda c: abs(c[0] - spot_price))[0]
+        for strike, oi_val in crossovers:
+            is_nearest = strike == nearest_strike
+            fig.add_trace(
+                go.Scatter(
+                    x=[strike], y=[oi_val],
+                    mode='markers+text',
+                    marker=dict(
+                        symbol='x', size=14 if is_nearest else 9,
+                        color='#fbbf24' if is_nearest else '#9ca3af',
+                        line=dict(width=2, color='black'),
+                    ),
+                    text=[f"₹{strike:,.0f} | {oi_val:.2f}L"],
+                    textposition='top center',
+                    textfont=dict(size=10, color='#fbbf24' if is_nearest else '#9ca3af'),
+                    name='OI Crossover' if is_nearest else None,
+                    showlegend=is_nearest,
+                    hovertemplate=(
+                        f"<b>OI Crossover</b><br>Strike ₹{strike:,.0f}"
+                        f"<br>Call OI ≈ Put OI ≈ {oi_val:.2f}L<extra></extra>"
+                    ),
+                ),
+                secondary_y=True,
+            )
+    # --------------------------------------------------------------
+    
     # ------------------ SPOT PRICE LINE ------------------
     fig.add_vline(
         x=spot_price,
