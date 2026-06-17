@@ -735,28 +735,21 @@ def plot_gex_oi_clustered(df_chain, selected_stock, spot_price, lower_bound, upp
     crossovers = _find_oi_crossovers(df_filtered)
     if crossovers:
         nearest_strike = min(crossovers, key=lambda c: abs(c[0] - spot_price))[0]
-        for strike, oi_val in crossovers:
+        for strike, _ in crossovers:
             is_nearest = strike == nearest_strike
-            fig.add_trace(
-                go.Scatter(
-                    x=[strike], y=[oi_val],
-                    mode='markers+text',
-                    marker=dict(
-                        symbol='x', size=14 if is_nearest else 9,
-                        color='#fbbf24' if is_nearest else '#9ca3af',
-                        line=dict(width=2, color='black'),
-                    ),
-                    text=[f"₹{strike:,.0f} | {oi_val:.2f}L"],
-                    textposition='top center',
-                    textfont=dict(size=10, color='#fbbf24' if is_nearest else '#9ca3af'),
-                    name='OI Crossover' if is_nearest else None,
-                    showlegend=is_nearest,
-                    hovertemplate=(
-                        f"<b>OI Crossover</b><br>Strike ₹{strike:,.0f}"
-                        f"<br>Call OI ≈ Put OI ≈ {oi_val:.2f}L<extra></extra>"
-                    ),
+            fig.add_vline(
+                x=strike,
+                line=dict(
+                    color='#fbbf24' if is_nearest else '#9ca3af',
+                    width=2 if is_nearest else 1.3,
+                    dash='dash',
                 ),
-                secondary_y=True,
+                annotation_text=f"₹{strike:,.0f}",
+                annotation_position="bottom left",
+                annotation_font=dict(
+                    size=10,
+                    color='#fbbf24' if is_nearest else '#9ca3af',
+                ),
             )
     # --------------------------------------------------------------
     
