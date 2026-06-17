@@ -739,17 +739,10 @@ def plot_gex_oi_clustered(df_chain, selected_stock, spot_price, lower_bound, upp
             is_nearest = strike == nearest_strike
             fig.add_vline(
                 x=strike,
-                line=dict(
-                    color='#fbbf24' if is_nearest else '#9ca3af',
-                    width=2 if is_nearest else 1.3,
-                    dash='dash',
-                ),
-                annotation_text=f"₹{strike:,.0f}",
+                line=dict(color='#fbbf24' if is_nearest else '#9ca3af', width=2 if is_nearest else 1.3, dash='dash'),
+                annotation_text=f"{strike:,.0f}", 
                 annotation_position="bottom left",
-                annotation_font=dict(
-                    size=10,
-                    color='#fbbf24' if is_nearest else '#9ca3af',
-                ),
+                annotation_font=dict(size=10, color='#fbbf24' if is_nearest else '#9ca3af')
             )
     # --------------------------------------------------------------
     
@@ -757,7 +750,7 @@ def plot_gex_oi_clustered(df_chain, selected_stock, spot_price, lower_bound, upp
     fig.add_vline(
         x=spot_price,
         line=dict(color='#151617', width=1, dash='dash'), # Blue dashed line
-        annotation_text=f"  Spot: ₹{spot_price:,.0f}",
+        annotation_text=f"  Spot:{spot_price:,.0f}",
         annotation_position="top right",
         annotation_font=dict(size=10, color='#60a5fa')
     )
