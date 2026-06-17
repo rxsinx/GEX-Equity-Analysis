@@ -643,7 +643,7 @@ def build_equity_matrix(
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-def plot_gex_oi_clustered(df_chain, selected_stock, spot_price, lower_bound, upper_bound, oi_cross_price):
+def plot_gex_oi_clustered(df_chain, selected_stock, spot_price, lower_bound, upper_bound, oi_cross_price =None):
     # Filter data around the spot price for clean visualization
     df_filtered = df_chain[(df_chain['Strike'] >= lower_bound) & (df_chain['Strike'] <= upper_bound)]
     
@@ -713,14 +713,7 @@ def plot_gex_oi_clustered(df_chain, selected_stock, spot_price, lower_bound, upp
         annotation_font=dict(size=10, color='#60a5fa')
     )
 
-    # ------------------ OI CROSS LINE ------------------
-    fig.add_vline(
-        x=oi_cross_price,
-        line=dict(color='#60a5fa', width=1, dash='dash'), # Blue dashed line
-        annotation_text=f"  Spot: ₹{spot_price:,.0f}",
-        annotation_position="down right",
-        annotation_font=dict(size=10, color='#60a5fa')
-    )
+    
     # ------------------ LAYOUT CONFIGURATION ------------------
     fig.update_layout(
         title_text=f"Call/Put GEX Bars with OI Lines — {selected_stock}",
