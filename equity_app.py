@@ -437,7 +437,7 @@ with st.sidebar:
                                 "eq_gex_df":       gdf,
                                 "eq_gamma_levels": find_equity_gamma_levels(gdf, new_spot, lot),
                             })
-                        st.success(f"₹{new_spot:,.2f}")
+                        #st.success(f"₹{new_spot:,.2f}")
                     except Exception as e:
                         st.error(str(e))
     with sc2:
