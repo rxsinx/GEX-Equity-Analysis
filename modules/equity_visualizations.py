@@ -643,12 +643,13 @@ def build_equity_matrix(
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-def _find_oi_crossovers(df):
+def _find_oi_crossovers(df, min_oi_lacs=0.05):
     """
-    Detect every point where the Call OI line crosses the Put OI line.
-    Uses linear interpolation between the two bracketing strikes so the
-    reported strike/OI value is the true intersection, not just the
-    nearest sampled strike.
+    Detect strikes where Call OI genuinely crosses Put OI (upward or downward).
+    Linear interpolation gives the precise crossing strike between two sampled points.
+    Crossings where both sides have negligible/zero OI are silently skipped.
+    min_oi_lacs: minimum OI (in Lacs) that at least one side must carry for the
+                 crossing to be treated as real. Default 0.05L = ~5,000 contracts.
     Returns a list of (strike, oi_value_at_cross) tuples.
     """
     d = df.sort_values('Strike').reset_index(drop=True)
@@ -660,14 +661,20 @@ def _find_oi_crossovers(df):
     crossings = []
     for i in range(len(diff) - 1):
         d0, d1 = diff[i], diff[i + 1]
-        if d0 == 0:
-            crossings.append((float(strikes[i]), float(call_oi[i])))
+
+        # Require a genuine sign change (strict inequality — excludes d0==0 noise)
+        if d0 * d1 >= 0:
             continue
-        if d0 * d1 < 0:  # sign change → lines crossed between i and i+1
-            w = abs(d0) / (abs(d0) + abs(d1) + 1e-9)
-            cross_strike = strikes[i] + (strikes[i + 1] - strikes[i]) * w
-            cross_oi     = call_oi[i] + (call_oi[i + 1] - call_oi[i]) * w
-            crossings.append((float(cross_strike), float(cross_oi)))
+
+        # Reject crossings where all four surrounding OI values are negligible
+        if max(call_oi[i], put_oi[i], call_oi[i + 1], put_oi[i + 1]) < min_oi_lacs:
+            continue
+
+        w = abs(d0) / (abs(d0) + abs(d1) + 1e-9)
+        cross_strike = strikes[i] + (strikes[i + 1] - strikes[i]) * w
+        cross_oi     = call_oi[i] + (call_oi[i + 1] - call_oi[i]) * w
+        crossings.append((float(cross_strike), float(cross_oi)))
+
     return crossings
 
 def plot_gex_oi_clustered(df_chain, selected_stock, spot_price, lower_bound, upper_bound, oi_cross_price =None):
